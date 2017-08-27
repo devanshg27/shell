@@ -1,0 +1,2 @@
+void initPrompt();
+void showPrompt();
