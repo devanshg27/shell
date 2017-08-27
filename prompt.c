@@ -31,7 +31,7 @@ void showPrompt() {
 	}
 	printf("<%s@%s:", username, system_name);
 	if(isPrefix) {
-		printf("~> ", &current_directory[strlen(home_directory)]);
+		printf("~%s> ", &current_directory[strlen(home_directory)]);
 	}
 	else {
 		printf("%s> ", current_directory);
