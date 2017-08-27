@@ -14,12 +14,14 @@ int main(){
 	while(1){
 		showPrompt();
 		fflush(stdout);
-		char **x = fetchCommands();
+		char **commands = fetchCommands();
 		int position = 0;
+		
 		while(1){
-			if(x[position] == NULL) break;
-			printf("%s\n", x[position]);
+			if(commands[position] == NULL) break;
+			printf("%s\n", commands[position]);
 			++position;
+			// runCommand(commands[position]);
 		}
 	}
 	del();

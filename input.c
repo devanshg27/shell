@@ -6,11 +6,12 @@
 #include <tokenize.h>
 
 char **fetchCommands(){
-	int BLOCK_SIZE = 100, BUFFER_SIZE = 100, position = 0, c = 0;
+	int BLOCK_SIZE = 100, BUFFER_SIZE = 100, position = 0;
+	char c = 0;
 	char *inp = malloc(sizeof(char) * BUFFER_SIZE);
 	while(1){
-		read(0, &c, 1);
-		if(c == '\n' || c == EOF) break;
+		if(scanf("%c", &c) == EOF) exit(0);
+		else if(c == '\n') break;
 		else{
 			if(position == BLOCK_SIZE){
 				BUFFER_SIZE += BLOCK_SIZE;
@@ -27,15 +28,3 @@ char **fetchCommands(){
 	inp[position] = '\0';
 	return tokenizeCommands(inp);
 }
-
-// void main(){
-// 	initTermios();
-// 	char **x = fetchCommands();
-// 	int position = 0;
-// 	while(1){
-// 		if(x[position] == NULL) break;
-// 		printf("%s\n", x[position]);
-// 		++position;
-// 	}
-// 	resetTermios();
-// }
