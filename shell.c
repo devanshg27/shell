@@ -1,12 +1,10 @@
 #include <prompt.h>
 #include <input.h>
 #include <stdio.h>
+#include <execute.h>
 
 void init(){
 	initPrompt();
-}
-
-void del(){
 }
 
 int main(){
@@ -19,11 +17,10 @@ int main(){
 		
 		while(1){
 			if(commands[position] == NULL) break;
-			printf("%s\n", commands[position]);
+			// printf("%s\n", commands[position]);
+			runCommand(commands[position]);
 			++position;
-			// runCommand(commands[position]);
 		}
 	}
-	del();
 	return 0;
 }

@@ -1,8 +1,7 @@
+#include <input.h>
 #include <unistd.h>
-#include <termios.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <tokenize.h>
 
 char **fetchCommands(){
@@ -10,7 +9,10 @@ char **fetchCommands(){
 	char c = 0;
 	char *inp = malloc(sizeof(char) * BUFFER_SIZE);
 	while(1){
-		if(scanf("%c", &c) == EOF) exit(0);
+		if(scanf("%c", &c) == EOF){
+			puts("");
+			exit(0);
+		}
 		else if(c == '\n') break;
 		else{
 			if(position == BLOCK_SIZE){
