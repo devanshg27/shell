@@ -36,4 +36,5 @@ void showPrompt() {
 	else {
 		printf("%s> ", current_directory);
 	}
+
 }

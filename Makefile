@@ -4,10 +4,10 @@ DEPS = prompt.h input.h tokenize.h execute.h
 OBJ = prompt.o shell.o input.o tokenize.o execute.o
 
 %.o: %.c $(DEPS)
-	$(CC) -c -o $@ $< $(CFLAGS)
+	$(CC) -c -g -o $@ $< $(CFLAGS)
 
 a.out: $(OBJ)
-	$(CC) -o $@ $^ $(CFLAGS)
+	$(CC) -g -o $@ $^ $(CFLAGS)
 
 .PHONY: clean
 

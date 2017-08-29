@@ -1,4 +1,5 @@
 #include <execute.h>
+#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -18,7 +19,45 @@ void runCommandinBackground(char **arguments) {
 	}
 }
 
+void cd(char **arguments, int count){
+	if(count != 2) printf("Error\n");
+	else chdir(arguments[1]);
+}
+
+void pwd(char **arguments, int count){
+
+}
+
+void echo(char **arguments, int count){
+
+}
+
+void ls(char **arguments, int count){
+
+}
+
+void (*implementedFunctions[10])(char **arguments, int count);
+char **implemented;
+
+void executeInit(){
+
+	implemented = malloc(sizeof(char*) * 10);
+
+	implementedFunctions[0] = cd;
+	implemented[0] = "cd";
+
+	implementedFunctions[1] = pwd;
+	implemented[1] = "pwd";
+
+	implementedFunctions[2] = echo;
+	implemented[2] = "echo";
+
+	implementedFunctions[3] = ls;
+	implemented[3] = "ls";
+}
+
 void runCommand(char *command){
+
 	int BLOCK_SIZE = 100, BUFFER_SIZE = 100, position = 0;
 	char **arguments = malloc(sizeof(char*) * BUFFER_SIZE);
 	char *argument;
@@ -33,6 +72,14 @@ void runCommand(char *command){
 		}
 		argument = strtok(NULL, " \t");
 	}
+
+	for(int i=0; i<4; ++i){
+		if(strcmp(arguments[0], implemented[i]) == 0){
+			(*implementedFunctions)(arguments, position);
+			return;
+		}
+	}
+
 	arguments[position] = NULL;
 	if(strcmp(arguments[position-1], "&") == 0) {
 		--position;
