@@ -6,6 +6,9 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
+#include <dirent.h>
+#include <stdlib.h>
 
 void runCommandinBackground(char **arguments) {
 	pid_t pid = fork();
@@ -32,8 +35,119 @@ void echo(char **arguments, int count){
 
 }
 
-void ls(char **arguments, int count){
+void show(char *x, int l, int a){
+	DIR* directory;
+	struct dirent *current;
+	directory = opendir(x);
+	
+	current = readdir(directory);
 
+	struct stat data;
+
+
+	for(; current != NULL; current = readdir(directory)){
+		if((current->d_name)[0] == '.'){
+			if(a){
+				if(l){
+					stat(current->d_name, &data);
+					if(S_ISREG(data.st_mode)) printf("-");
+					else printf("d");
+					if(data.st_mode & S_IRUSR) printf("r");
+					else printf("-");
+					if(data.st_mode & S_IWUSR) printf("w");
+					else printf("-");
+					if(data.st_mode & S_IXUSR) printf("x");
+					else printf("-");
+					if(data.st_mode & S_IRGRP) printf("r");
+					else printf("-");
+					if(data.st_mode & S_IWGRP) printf("w");
+					else printf("-");
+					if(data.st_mode & S_IXGRP) printf("x");
+					else printf("-");
+					if(data.st_mode & S_IROTH) printf("r");
+					else printf("-");
+					if(data.st_mode & S_IWOTH) printf("w");
+					else printf("-");
+					if(data.st_mode & S_IXOTH) printf("x");
+					else printf("-");
+					printf("\t");
+					
+				}
+				printf("%s\n", current->d_name);	
+			} 
+		}
+		else{
+			if(l){
+				stat(current->d_name, &data);
+				if(S_ISREG(data.st_mode)) printf("-");
+				else printf("d");
+				if(data.st_mode & S_IRUSR) printf("r");
+				else printf("-");
+				if(data.st_mode & S_IWUSR) printf("w");
+				else printf("-");
+				if(data.st_mode & S_IXUSR) printf("x");
+				else printf("-");
+				if(data.st_mode & S_IRGRP) printf("r");
+				else printf("-");
+				if(data.st_mode & S_IWGRP) printf("w");
+				else printf("-");
+				if(data.st_mode & S_IXGRP) printf("x");
+				else printf("-");
+				if(data.st_mode & S_IROTH) printf("r");
+				else printf("-");
+				if(data.st_mode & S_IWOTH) printf("w");
+				else printf("-");
+				if(data.st_mode & S_IXOTH) printf("x");
+				else printf("-");
+				printf("\t");
+				
+			}
+			printf("%s\n", current->d_name);				
+		} 
+	}
+
+}
+
+void ls(char **arguments, int count){
+	int A = 0, L = 0, idx = 1;
+	char *location = malloc(sizeof(char) * 4096);
+
+	while(arguments[idx] != NULL){
+		if(arguments[idx][0] == '-' && strlen(arguments[idx]) > 1){
+			for(int j=1; j<strlen(arguments[idx]); ++j){
+				if(arguments[idx][j] == 'a') A = 1;
+				else if(arguments[idx][j] == 'l') L = 1;
+				else{
+					printf("Invalid Flag");
+					return;
+				}
+			}
+		}
+		++idx;
+	}
+
+
+	int yes = 0; idx = 1;
+	while(arguments[idx] != NULL){
+		if(arguments[idx][0] == '-'){
+			if((int)strlen(arguments[idx]) > 1);
+			else{
+				show(arguments[idx], L, A);
+				yes = 1;
+			}
+		}
+		else{
+			show(arguments[idx], L, A);
+			yes = 1;			
+		}
+		++idx;
+	}
+
+	if(yes == 0){
+		char *current = malloc(sizeof(char) * 2);
+		current = ".";
+		show(current, L, A);
+	}
 }
 
 void (*implementedFunctions[10])(char **arguments, int count);
@@ -75,7 +189,7 @@ void runCommand(char *command){
 
 	for(int i=0; i<4; ++i){
 		if(strcmp(arguments[0], implemented[i]) == 0){
-			(*implementedFunctions)(arguments, position);
+			(implementedFunctions[i])(arguments, position);
 			return;
 		}
 	}
