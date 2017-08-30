@@ -1,5 +1,6 @@
 #include <execute.h>
 #include <stdio.h>
+#include <time.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -8,8 +9,11 @@
 #include <sys/wait.h>
 #include <linux/limits.h>
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <pwd.h>
 #include <dirent.h>
 #include <stdlib.h>
+#include <grp.h>
 
 void runCommandinBackground(char **arguments) {
 	pid_t pid = fork();
@@ -43,6 +47,45 @@ void echo(char **arguments, int count){
 	printf("\n");
 }
 
+void listFileInfo(char *directoryName, char *fileName){
+	struct stat data;
+	char filePath[PATH_MAX + 1];
+
+	strcpy(filePath, directoryName);
+	strcat(filePath, "/");
+	strcat(filePath, fileName);
+	stat(filePath, &data);
+	if(S_ISREG(data.st_mode)) printf("-");
+	else printf("d");
+	if(data.st_mode & S_IRUSR) printf("r");
+	else printf("-");
+	if(data.st_mode & S_IWUSR) printf("w");
+	else printf("-");
+	if(data.st_mode & S_IXUSR) printf("x");
+	else printf("-");
+	if(data.st_mode & S_IRGRP) printf("r");
+	else printf("-");
+	if(data.st_mode & S_IWGRP) printf("w");
+	else printf("-");
+	if(data.st_mode & S_IXGRP) printf("x");
+	else printf("-");
+	if(data.st_mode & S_IROTH) printf("r");
+	else printf("-");
+	if(data.st_mode & S_IWOTH) printf("w");
+	else printf("-");
+	if(data.st_mode & S_IXOTH) printf("x");
+	else printf("-");
+	printf(" ");
+	printf("%d ", data.st_nlink);
+	printf("%s ", getpwuid(data.st_uid)->pw_name);
+	printf("%s ", getgrgid(data.st_gid)->gr_name);
+	printf("%10d ", data.st_size);
+
+	char *c_time_string = ctime(&data.st_mtim.tv_sec);
+	c_time_string[strlen(c_time_string) - 1] = '\0';
+	printf("%s ", c_time_string);
+}
+
 void show(char *x, int l, int a){
 	DIR* directory;
 	struct dirent *current;
@@ -50,65 +93,18 @@ void show(char *x, int l, int a){
 	
 	current = readdir(directory);
 
-	struct stat data;
-
-
 	for(; current != NULL; current = readdir(directory)){
 		if((current->d_name)[0] == '.'){
 			if(a){
 				if(l){
-					stat(current->d_name, &data);
-					if(S_ISREG(data.st_mode)) printf("-");
-					else printf("d");
-					if(data.st_mode & S_IRUSR) printf("r");
-					else printf("-");
-					if(data.st_mode & S_IWUSR) printf("w");
-					else printf("-");
-					if(data.st_mode & S_IXUSR) printf("x");
-					else printf("-");
-					if(data.st_mode & S_IRGRP) printf("r");
-					else printf("-");
-					if(data.st_mode & S_IWGRP) printf("w");
-					else printf("-");
-					if(data.st_mode & S_IXGRP) printf("x");
-					else printf("-");
-					if(data.st_mode & S_IROTH) printf("r");
-					else printf("-");
-					if(data.st_mode & S_IWOTH) printf("w");
-					else printf("-");
-					if(data.st_mode & S_IXOTH) printf("x");
-					else printf("-");
-					printf("\t");
-					
+					listFileInfo(x, current->d_name);
 				}
 				printf("%s\n", current->d_name);	
 			} 
 		}
 		else{
 			if(l){
-				stat(current->d_name, &data);
-				if(S_ISREG(data.st_mode)) printf("-");
-				else printf("d");
-				if(data.st_mode & S_IRUSR) printf("r");
-				else printf("-");
-				if(data.st_mode & S_IWUSR) printf("w");
-				else printf("-");
-				if(data.st_mode & S_IXUSR) printf("x");
-				else printf("-");
-				if(data.st_mode & S_IRGRP) printf("r");
-				else printf("-");
-				if(data.st_mode & S_IWGRP) printf("w");
-				else printf("-");
-				if(data.st_mode & S_IXGRP) printf("x");
-				else printf("-");
-				if(data.st_mode & S_IROTH) printf("r");
-				else printf("-");
-				if(data.st_mode & S_IWOTH) printf("w");
-				else printf("-");
-				if(data.st_mode & S_IXOTH) printf("x");
-				else printf("-");
-				printf("\t");
-				
+				listFileInfo(x, current->d_name);
 			}
 			printf("%s\n", current->d_name);				
 		} 

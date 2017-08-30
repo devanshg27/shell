@@ -1,4 +1,5 @@
 #include <prompt.h>
+#include <stdlib.h>
 #include <limits.h>
 #include <string.h>
 #include <linux/limits.h>
@@ -12,7 +13,9 @@ char system_name[HOST_NAME_MAX + 1];
 char home_directory[PATH_MAX + 1];
 
 void initPrompt() {
-	username = getpwuid(geteuid())->pw_name;
+	char *usernamePointer = getpwuid(geteuid())->pw_name;
+	username = malloc(strlen(usernamePointer) + 1);
+	strcpy(username, usernamePointer);
 	gethostname(system_name, HOST_NAME_MAX + 1);
 	getcwd(home_directory, PATH_MAX + 1);
 }
