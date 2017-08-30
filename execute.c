@@ -28,19 +28,22 @@ void runCommandinBackground(char **arguments) {
 		exit(0);
 	}
 	else{
-		int val = wait(NULL);
-		if(val == -1){
-			perror("Wait Error");
+
+		int status;
+
+		if(waitpid(pid, &status, 0) == -1){
+			perror("waitpid() failed");
 			exit(0);
 		}
-
-		fprintf(stderr, "%s with pid %d exited normally\n", arguments[0], pid);
-		exit(0);
+		if(WIFEXITED(status)){
+			int es = WEXITSTATUS(status);
+			printf("%s with pid %d exited with status %d\n", arguments[0], pid, es);
+		}
 	}
 }
 
 void cd(char **arguments, int count){
-	if(count > 2) printf("Error\n");
+	if(count > 2) printf("Error: Invalid Usage\n");
 	else{
 		int val = chdir(arguments[1]);	
 		if(val == -1){
@@ -51,7 +54,7 @@ void cd(char **arguments, int count){
 }
 
 void pwd(char **arguments, int count){
-	if(count > 1) printf("Error\n");
+	if(count > 1) printf("Error: Invalid Usage\n");
 	char present_directory[PATH_MAX + 1];
 	if(getcwd(present_directory, PATH_MAX + 1) != NULL){
 		printf("%s\n", present_directory);
