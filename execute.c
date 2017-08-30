@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <linux/limits.h>
 
 void runCommandinBackground(char **arguments) {
 	pid_t pid = fork();
@@ -20,16 +21,23 @@ void runCommandinBackground(char **arguments) {
 }
 
 void cd(char **arguments, int count){
-	if(count != 2) printf("Error\n");
+	if(count > 2) printf("Error\n");
 	else chdir(arguments[1]);
 }
 
 void pwd(char **arguments, int count){
-
+	if(count > 1) printf("Error\n");
+	char present_directory[PATH_MAX + 1];
+	getcwd(present_directory, PATH_MAX + 1);
+	printf("%s\n", present_directory);
 }
 
 void echo(char **arguments, int count){
-
+	for(int i=1; i<count; ++i){
+		printf("%s", arguments[i]);
+		if(i < count-1) printf(" ");
+	}
+	printf("\n");
 }
 
 void ls(char **arguments, int count){
@@ -75,7 +83,7 @@ void runCommand(char *command){
 
 	for(int i=0; i<4; ++i){
 		if(strcmp(arguments[0], implemented[i]) == 0){
-			(*implementedFunctions)(arguments, position);
+			(implementedFunctions[i])(arguments, position);
 			return;
 		}
 	}
