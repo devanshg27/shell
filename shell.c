@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <execute.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 void init(){
 	initPrompt();

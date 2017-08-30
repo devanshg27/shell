@@ -16,6 +16,107 @@
 #include <grp.h>
 #include <fcntl.h>
 
+char home_directory[PATH_MAX + 1];
+
+void initExecute(){
+	if(getcwd(home_directory, PATH_MAX + 1) == NULL){
+		perror("Getcwd error");
+		exit(0);
+	}
+}
+
+void nightswatch(char **arguments, int count){
+	double timeInterval;
+	if(count != 4){
+		printf("Error\n");
+		return;
+	}
+	if(strcmp(arguments[1], "-n") != 0){
+		printf("Error\n");
+		return;
+	}
+	timeInterval = atof(arguments[2]);
+	if(timeInterval <= 0.0){
+		printf("Error\n");
+		return;
+	}
+	if(strcmp(arguments[3], "interrupt") == 0){
+		time_t now, prev;
+		int firstRun = 1;
+		while(1){
+			time(&now);
+			if(firstRun || difftime(now, prev) >= timeInterval){
+				int fd_file = open("/proc/interrupts", O_RDONLY);
+				if(fd_file<0){
+					perror("Open Error");
+					exit(0);
+				}
+				else{
+					char buf[100001];
+					read(fd_file, buf, 100000);
+					char *p=strtok(buf, "\n");
+					printf("%s\n", p);
+					while(p!=NULL){
+						if(strstr (p, "i8042") != NULL){
+							char *infoLine = p;
+							while(infoLine) {
+								if(('a' <= *infoLine && *infoLine <= 'z') || ('A' <= *infoLine && *infoLine <= 'Z')){
+									*infoLine = '\0';
+									break;
+								}
+								++infoLine;
+							}
+							printf("%s\n", p);
+							break;
+						}
+						p=strtok(NULL, "\n");
+					}
+				}
+				prev = now;
+				firstRun = 0;
+				close(fd_file);
+			}
+		}
+	}
+	else if(strcmp(arguments[3], "dirty") == 0){
+		time_t now, prev;
+		int firstRun = 1;
+		while(1){
+			time(&now);
+			if(firstRun || difftime(now, prev) >= timeInterval){
+				int fd_file = open("/proc/meminfo", O_RDONLY);
+				if(fd_file<0){
+					perror("Open Error");
+					exit(0);
+				}
+				else{
+					char buf[100001];
+					read(fd_file, buf, 100000);
+					char *p=strtok(buf, "\n");
+					while(p!=NULL){
+						if(strstr (p, "Dirty:") != NULL){
+							while(p) {
+								if('0' <= *p && *p <= '9') break;
+								++p;
+							}
+							printf("%s\n", p);
+							break;
+						}
+						p=strtok(NULL, "\n");
+					}
+				}
+				prev = now;
+				firstRun = 0;
+				close(fd_file);
+			}
+		}
+	}
+	else{
+		printf("Error\n");
+		return;
+	}
+}
+
 void runCommandinBackground(char **arguments) {
 	pid_t pid = fork();
 	if(pid == -1){
@@ -42,7 +143,25 @@ void runCommandinBackground(char **arguments) {
 void cd(char **arguments, int count){
 	if(count > 2) printf("Error\n");
 	else{
-		int val = chdir(arguments[1]);	
+		char *destinationDirectory;
+		if(count == 1) destinationDirectory = home_directory;
+		else destinationDirectory = arguments[1];
+		if(count > 1 && arguments[1][0] == '~' && arguments[1][1] == '/') {
+			destinationDirectory = malloc(strlen(home_directory) + strlen(arguments[1]));
+			if(destinationDirectory == NULL) {
+				perror("Malloc Failed");
+				exit(0);
+			}
+			if(strcpy(destinationDirectory, home_directory) == NULL) {
+				perror("Strcpy Error");
+				exit(0);
+			}
+			if(strcat(destinationDirectory, &arguments[1][1]) == NULL) {
+				perror("Strcat Error");
+				exit(0);
+			}
+		}
+		int val = chdir(destinationDirectory);
 		if(val == -1){
 			perror("Chdir Error");
 			exit(0);
@@ -252,7 +371,7 @@ void ls(char **arguments, int count){
 struct builtins{
 	char *command;
 	void (*commandFunction)(char **arguments, int count);
-} implementedBuiltins[] = {{"cd", cd}, {"pwd", pwd}, {"echo", echo}, {"ls", ls}};
+} implementedBuiltins[] = {{"cd", cd}, {"pwd", pwd}, {"echo", echo}, {"ls", ls}, {"nightswatch", nightswatch}};
 
 void runCommand(char *command){
 
@@ -281,7 +400,8 @@ void runCommand(char *command){
 		argument = strtok(NULL, " \t");
 	}
 
-	for(int i=0; i<4; ++i){
+	int numberOfImplementedBuiltins = sizeof(implementedBuiltins)/sizeof(implementedBuiltins[0]);
+	for(int i=0; i<numberOfImplementedBuiltins; ++i){
 		if(strcmp(arguments[0], implementedBuiltins[i].command) == 0){
 			(implementedBuiltins[i].commandFunction)(arguments, position);
 			return;
