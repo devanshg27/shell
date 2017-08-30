@@ -10,6 +10,11 @@
 char **tokenizeCommands(char *input){
 	int BUFFER_SIZE = BLOCK_SIZE, position = 0;
 	char **tokens = malloc(sizeof(char*) * BUFFER_SIZE);
+	if(tokens == NULL){
+		perror("Malloc Failed\n");
+		exit(0);
+	}
+
 	char *token;
 
 	token = strtok(input, ";");
@@ -19,20 +24,13 @@ char **tokenizeCommands(char *input){
 		if(position == BUFFER_SIZE){
 			BUFFER_SIZE += BLOCK_SIZE;
 			tokens = realloc(tokens, BUFFER_SIZE * sizeof(char*));
+			if(tokens == NULL){
+				perror("Realloc Failed\n");
+				exit(0);
+			}
 		}
 		token = strtok(NULL, ";");
 	}
-	tokens[position] = NULL;
-	return tokens;
-}
-
-
-char **getCommandDetails(char *input){
-	int BUFFER_SIZE = BLOCK_SIZE, position = 0;
-	char **tokens = malloc(sizeof(char*) * BUFFER_SIZE);
-	char *token;
-
-
 	tokens[position] = NULL;
 	return tokens;
 }

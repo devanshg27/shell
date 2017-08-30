@@ -7,7 +7,13 @@
 char **fetchCommands(){
 	int BLOCK_SIZE = 100, BUFFER_SIZE = 100, position = 0;
 	char c = 0;
+
 	char *inp = malloc(sizeof(char) * BUFFER_SIZE);
+	if(inp == NULL){
+		perror("Malloc Failed\n");
+		exit(0);
+	}
+
 	while(1){
 		if(scanf("%c", &c) == EOF){
 			puts("");
@@ -18,6 +24,10 @@ char **fetchCommands(){
 			if(position == BLOCK_SIZE){
 				BUFFER_SIZE += BLOCK_SIZE;
 				inp = realloc(inp, BUFFER_SIZE);
+				if(inp == NULL){
+					perror("Realloc Error");
+					exit(0);
+				}
 			}
 			inp[position] = c;
 			++position;
@@ -25,8 +35,13 @@ char **fetchCommands(){
 	}
 	if(position == BLOCK_SIZE){
 		++BUFFER_SIZE;
-		inp = realloc(inp, BUFFER_SIZE); 
+		inp = realloc(inp, BUFFER_SIZE);
+		if(inp == NULL){
+			perror("Realloc Error");
+			exit(0);
+		} 
 	}
 	inp[position] = '\0';
+	
 	return tokenizeCommands(inp);
 }

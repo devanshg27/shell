@@ -1,1 +1,1 @@
-char** fetchCommands();
+char **fetchCommands();

@@ -14,14 +14,26 @@
 #include <dirent.h>
 #include <stdlib.h>
 #include <grp.h>
+#include <fcntl.h>
 
 void runCommandinBackground(char **arguments) {
 	pid_t pid = fork();
-	if(pid==0){
+	if(pid == -1){
+		perror("Fork Error");
+		exit(0);
+	}
+	else if(pid==0){
 		execvp(arguments[0], arguments);
+		perror("Execvp Error");
+		exit(0);
 	}
 	else{
-		wait(NULL);
+		int val = wait(NULL);
+		if(val == -1){
+			perror("Wait Error");
+			exit(0);
+		}
+
 		fprintf(stderr, "%s with pid %d exited normally\n", arguments[0], pid);
 		exit(0);
 	}
@@ -29,14 +41,25 @@ void runCommandinBackground(char **arguments) {
 
 void cd(char **arguments, int count){
 	if(count > 2) printf("Error\n");
-	else chdir(arguments[1]);
+	else{
+		int val = chdir(arguments[1]);	
+		if(val == -1){
+			perror("Chdir Error");
+			exit(0);
+		}
+	} 
 }
 
 void pwd(char **arguments, int count){
 	if(count > 1) printf("Error\n");
 	char present_directory[PATH_MAX + 1];
-	getcwd(present_directory, PATH_MAX + 1);
-	printf("%s\n", present_directory);
+	if(getcwd(present_directory, PATH_MAX + 1) != NULL){
+		printf("%s\n", present_directory);
+	}
+	else{
+		perror("Getcwd Error");
+		exit(0);
+	}
 }
 
 void echo(char **arguments, int count){
@@ -51,48 +74,72 @@ void listFileInfo(char *directoryName, char *fileName){
 	struct stat data;
 	char filePath[PATH_MAX + 1];
 
-	strcpy(filePath, directoryName);
-	strcat(filePath, "/");
-	strcat(filePath, fileName);
-	stat(filePath, &data);
-	if(S_ISREG(data.st_mode)) printf("-");
-	else printf("d");
-	if(data.st_mode & S_IRUSR) printf("r");
-	else printf("-");
-	if(data.st_mode & S_IWUSR) printf("w");
-	else printf("-");
-	if(data.st_mode & S_IXUSR) printf("x");
-	else printf("-");
-	if(data.st_mode & S_IRGRP) printf("r");
-	else printf("-");
-	if(data.st_mode & S_IWGRP) printf("w");
-	else printf("-");
-	if(data.st_mode & S_IXGRP) printf("x");
-	else printf("-");
-	if(data.st_mode & S_IROTH) printf("r");
-	else printf("-");
-	if(data.st_mode & S_IWOTH) printf("w");
-	else printf("-");
-	if(data.st_mode & S_IXOTH) printf("x");
-	else printf("-");
-	printf(" ");
-	printf("%d ", data.st_nlink);
-	printf("%s ", getpwuid(data.st_uid)->pw_name);
-	printf("%s ", getgrgid(data.st_gid)->gr_name);
-	printf("%10d ", data.st_size);
+	if(strcpy(filePath, directoryName) != NULL){
+		if(strcat(filePath, "/") != NULL){
+			if(strcat(filePath, fileName) != NULL){
+				int val = stat(filePath, &data);
+				if(val == -1){
+					perror("Stat Error");
+					exit(0);
+				}
+				if(S_ISREG(data.st_mode)) printf("-");
+				else printf("d");
+				if(data.st_mode & S_IRUSR) printf("r");
+				else printf("-");
+				if(data.st_mode & S_IWUSR) printf("w");
+				else printf("-");
+				if(data.st_mode & S_IXUSR) printf("x");
+				else printf("-");
+				if(data.st_mode & S_IRGRP) printf("r");
+				else printf("-");
+				if(data.st_mode & S_IWGRP) printf("w");
+				else printf("-");
+				if(data.st_mode & S_IXGRP) printf("x");
+				else printf("-");
+				if(data.st_mode & S_IROTH) printf("r");
+				else printf("-");
+				if(data.st_mode & S_IWOTH) printf("w");
+				else printf("-");
+				if(data.st_mode & S_IXOTH) printf("x");
+				else printf("-");
+				printf(" ");
+				printf("%d ", data.st_nlink);
+				printf("%s ", getpwuid(data.st_uid)->pw_name);
+				printf("%s ", getgrgid(data.st_gid)->gr_name);
+				printf("%10d ", data.st_size);
 
-	char *c_time_string = ctime(&data.st_mtim.tv_sec);
-	c_time_string[strlen(c_time_string) - 1] = '\0';
-	printf("%s ", c_time_string);
+				char *c_time_string = ctime(&data.st_mtim.tv_sec);
+				c_time_string[strlen(c_time_string) - 1] = '\0';
+				printf("%s ", c_time_string);
+			}
+			else{
+				perror("Strcat Error");
+				exit(0);
+			}
+		}
+		else{
+			perror("Strcat Error");
+			exit(0);
+		}
+	}
+	else{
+		perror("Strcpy Error");
+		exit(0);
+	}
 }
 
 void show(char *x, int l, int a){
 	DIR* directory;
 	struct dirent *current;
-	directory = opendir(x);
-	
-	current = readdir(directory);
 
+	directory = opendir(x);
+	if(directory == NULL){
+		perror("Opendir Error");
+		exit(0);
+	}
+
+	current = readdir(directory);
+	
 	for(; current != NULL; current = readdir(directory)){
 		if((current->d_name)[0] == '.'){
 			if(a){
@@ -114,7 +161,12 @@ void show(char *x, int l, int a){
 
 void ls(char **arguments, int count){
 	int A = 0, L = 0, idx = 1;
+
 	char *location = malloc(sizeof(char) * 4096);
+	if((location) == NULL){
+		perror("Malloc Failed");
+		exit(0);
+	}
 
 	while(arguments[idx] != NULL){
 		if(arguments[idx][0] == '-' && strlen(arguments[idx]) > 1){
@@ -130,29 +182,76 @@ void ls(char **arguments, int count){
 		++idx;
 	}
 
+	idx = 1, count = 0;
+	while(arguments[idx] != NULL){
+		if(arguments[idx][0] == '-'){
+			if((int)strlen(arguments[idx]) > 1);
+			else ++count;	
+		}
+		else ++count; 
+		++idx;
+	}
 
-	int yes = 0; idx = 1;
+	int yes = 0, pos = 0; idx = 1;
 	while(arguments[idx] != NULL){
 		if(arguments[idx][0] == '-'){
 			if((int)strlen(arguments[idx]) > 1);
 			else{
+				++pos;
+				if(count > 1) printf("%s:\n", arguments[idx]);
 				show(arguments[idx], L, A);
 				yes = 1;
+				if(pos != count) printf("\n");
 			}
 		}
 		else{
+			++pos;
+			if(count > 1) printf("%s:\n", arguments[idx]);
 			show(arguments[idx], L, A);
 			yes = 1;			
+			if(pos != count) printf("\n");	
 		}
 		++idx;
 	}
 
 	if(yes == 0){
+
 		char *current = malloc(sizeof(char) * 2);
+		if(current == NULL){
+			perror("Malloc Failed");
+			exit(0);
+		}
+
 		current = ".";
 		show(current, L, A);
 	}
 }
+
+// void pinfo(char **arguments, int count){
+// 	int position = 0;
+// 	while(arguments[position] != '\0') ++position;
+// 	int pid = 0;
+// 	if(position == 1) pid = getpid();
+// 	else if(position == 2){
+// 		for(int i=0; i<strlen(arguments[1]); ++i){
+// 			pid	= pid * 10;
+// 			pid += arguments[1][i] - '0';
+// 		}
+// 	}
+// 	else{
+// 		printf("ERROR\n");
+// 		return;	
+// 	} 
+// 	printf("pid %d\n", pid);
+
+// 	char *file = "/proc/";
+// 	strcat(statPath, pid);
+// 	strcat(statPath, "/exe");
+
+// }
+// pid, , status, memory
+// 0, 1, 2, 22
+
 
 void (*implementedFunctions[10])(char **arguments, int count);
 char **implemented;
@@ -160,6 +259,11 @@ char **implemented;
 void executeInit(){
 
 	implemented = malloc(sizeof(char*) * 10);
+	if((implemented) == NULL){
+		perror("Malloc Failed");
+		exit(0);
+	}
+
 
 	implementedFunctions[0] = cd;
 	implemented[0] = "cd";
@@ -172,12 +276,22 @@ void executeInit(){
 
 	implementedFunctions[3] = ls;
 	implemented[3] = "ls";
+
+	// implementedFunctions[4] = pinfo;
+	// implemented[4] = "pinfo";
+
 }
 
 void runCommand(char *command){
 
 	int BLOCK_SIZE = 100, BUFFER_SIZE = 100, position = 0;
+
 	char **arguments = malloc(sizeof(char*) * BUFFER_SIZE);
+	if(arguments == NULL){
+		perror("Malloc Failed");
+		exit(0);
+	}
+
 	char *argument;
 
 	argument = strtok(command, " \t");
@@ -187,6 +301,10 @@ void runCommand(char *command){
 		if(position == BUFFER_SIZE){
 			BUFFER_SIZE += BLOCK_SIZE;
 			arguments = realloc(arguments, BUFFER_SIZE * sizeof(char*));
+			if(arguments == NULL){
+				perror("Realloc Error");
+				exit(0);
+			}
 		}
 		argument = strtok(NULL, " \t");
 	}
@@ -203,17 +321,31 @@ void runCommand(char *command){
 		--position;
 		arguments[position] = NULL;
 		pid_t pid = fork();
-		if(pid==0){
+		if(pid == -1){
+			perror("Fork Error");
+			exit(0);
+		}
+		else if(pid==0){
 			runCommandinBackground(arguments);
 		}
 	}
 	else{
 		pid_t pid = fork();
-		if(pid==0){
+		if(pid == -1){
+			perror("Fork Error");
+			exit(0);
+		}
+		else if(pid==0){
 			execvp(arguments[0], arguments);
+			perror("Execvp Error");
+			exit(0);
 		}
 		else{
-			wait(NULL);
+			int val = wait(NULL);
+			if(val == -1){
+				perror("Wait Error");
+				exit(0);
+			}
 		}
 	}
 }

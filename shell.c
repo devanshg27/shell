@@ -16,7 +16,11 @@ int main(){
 	init();
 	while(1){
 		showPrompt();
-		fflush(stdout);
+		int val = fflush(stdout);
+		if(val != 0){
+			perror("Error in Flushing Output\n");
+			exit(0);
+		}
 		char **commands = fetchCommands();
 		int position = 0;
 		while(1){
