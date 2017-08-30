@@ -55,26 +55,22 @@ void listFileInfo(char *directoryName, char *fileName){
 	strcat(filePath, "/");
 	strcat(filePath, fileName);
 	stat(filePath, &data);
-	if(S_ISREG(data.st_mode)) printf("-");
-	else printf("d");
-	if(data.st_mode & S_IRUSR) printf("r");
+	if(S_ISDIR(data.st_mode)) printf("d");
+	else if(S_ISCHR(data.st_mode)) printf("c");
+	else if(S_ISLNK(data.st_mode)) printf("l");
+	else if(S_ISFIFO(data.st_mode)) printf("p");
+	else if(S_ISSOCK(data.st_mode)) printf("s");
+	else if(S_ISBLK(data.st_mode)) printf("b");
 	else printf("-");
-	if(data.st_mode & S_IWUSR) printf("w");
-	else printf("-");
-	if(data.st_mode & S_IXUSR) printf("x");
-	else printf("-");
-	if(data.st_mode & S_IRGRP) printf("r");
-	else printf("-");
-	if(data.st_mode & S_IWGRP) printf("w");
-	else printf("-");
-	if(data.st_mode & S_IXGRP) printf("x");
-	else printf("-");
-	if(data.st_mode & S_IROTH) printf("r");
-	else printf("-");
-	if(data.st_mode & S_IWOTH) printf("w");
-	else printf("-");
-	if(data.st_mode & S_IXOTH) printf("x");
-	else printf("-");
+	printf("%s", (data.st_mode & S_IRUSR) ? "r" : "-");
+	printf("%s", (data.st_mode & S_IWUSR) ? "w" : "-");
+	printf("%s", (data.st_mode & S_IXUSR) ? "x" : "-");
+	printf("%s", (data.st_mode & S_IRGRP) ? "r" : "-");
+	printf("%s", (data.st_mode & S_IWGRP) ? "w" : "-");
+	printf("%s", (data.st_mode & S_IXGRP) ? "x" : "-");
+	printf("%s", (data.st_mode & S_IROTH) ? "r" : "-");
+	printf("%s", (data.st_mode & S_IWOTH) ? "w" : "-");
+	printf("%s", (data.st_mode & S_IXOTH) ? "x" : "-");
 	printf(" ");
 	printf("%d ", data.st_nlink);
 	printf("%s ", getpwuid(data.st_uid)->pw_name);
@@ -154,25 +150,10 @@ void ls(char **arguments, int count){
 	}
 }
 
-void (*implementedFunctions[10])(char **arguments, int count);
-char **implemented;
-
-void executeInit(){
-
-	implemented = malloc(sizeof(char*) * 10);
-
-	implementedFunctions[0] = cd;
-	implemented[0] = "cd";
-
-	implementedFunctions[1] = pwd;
-	implemented[1] = "pwd";
-
-	implementedFunctions[2] = echo;
-	implemented[2] = "echo";
-
-	implementedFunctions[3] = ls;
-	implemented[3] = "ls";
-}
+struct builtins{
+	char *command;
+	void (*commandFunction)(char **arguments, int count);
+} implementedBuiltins[] = {{"cd", cd}, {"pwd", pwd}, {"echo", echo}, {"ls", ls}};
 
 void runCommand(char *command){
 
@@ -192,8 +173,8 @@ void runCommand(char *command){
 	}
 
 	for(int i=0; i<4; ++i){
-		if(strcmp(arguments[0], implemented[i]) == 0){
-			(implementedFunctions[i])(arguments, position);
+		if(strcmp(arguments[0], implementedBuiltins[i].command) == 0){
+			(implementedBuiltins[i].commandFunction)(arguments, position);
 			return;
 		}
 	}
