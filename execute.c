@@ -223,7 +223,6 @@ void ls(char **arguments, int count){
 	}
 }
 
-<<<<<<< HEAD
 // void pinfo(char **arguments, int count){
 // 	int position = 0;
 // 	while(arguments[position] != '\0') ++position;
@@ -250,40 +249,10 @@ void ls(char **arguments, int count){
 // 0, 1, 2, 22
 
 
-void (*implementedFunctions[10])(char **arguments, int count);
-char **implemented;
-
-void executeInit(){
-
-	implemented = malloc(sizeof(char*) * 10);
-	if((implemented) == NULL){
-		perror("Malloc Failed");
-		exit(0);
-	}
-
-
-	implementedFunctions[0] = cd;
-	implemented[0] = "cd";
-
-	implementedFunctions[1] = pwd;
-	implemented[1] = "pwd";
-
-	implementedFunctions[2] = echo;
-	implemented[2] = "echo";
-
-	implementedFunctions[3] = ls;
-	implemented[3] = "ls";
-
-	// implementedFunctions[4] = pinfo;
-	// implemented[4] = "pinfo";
-
-}
-=======
 struct builtins{
 	char *command;
 	void (*commandFunction)(char **arguments, int count);
 } implementedBuiltins[] = {{"cd", cd}, {"pwd", pwd}, {"echo", echo}, {"ls", ls}};
->>>>>>> e237cb91848a5dd3531aff3d64410fc022264f7f
 
 void runCommand(char *command){
 
