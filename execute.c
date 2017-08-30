@@ -82,26 +82,22 @@ void listFileInfo(char *directoryName, char *fileName){
 					perror("Stat Error");
 					exit(0);
 				}
-				if(S_ISREG(data.st_mode)) printf("-");
-				else printf("d");
-				if(data.st_mode & S_IRUSR) printf("r");
+				if(S_ISDIR(data.st_mode)) printf("d");
+				else if(S_ISCHR(data.st_mode)) printf("c");
+				else if(S_ISLNK(data.st_mode)) printf("l");
+				else if(S_ISFIFO(data.st_mode)) printf("p");
+				else if(S_ISSOCK(data.st_mode)) printf("s");
+				else if(S_ISBLK(data.st_mode)) printf("b");
 				else printf("-");
-				if(data.st_mode & S_IWUSR) printf("w");
-				else printf("-");
-				if(data.st_mode & S_IXUSR) printf("x");
-				else printf("-");
-				if(data.st_mode & S_IRGRP) printf("r");
-				else printf("-");
-				if(data.st_mode & S_IWGRP) printf("w");
-				else printf("-");
-				if(data.st_mode & S_IXGRP) printf("x");
-				else printf("-");
-				if(data.st_mode & S_IROTH) printf("r");
-				else printf("-");
-				if(data.st_mode & S_IWOTH) printf("w");
-				else printf("-");
-				if(data.st_mode & S_IXOTH) printf("x");
-				else printf("-");
+				printf("%s", (data.st_mode & S_IRUSR) ? "r" : "-");
+				printf("%s", (data.st_mode & S_IWUSR) ? "w" : "-");
+				printf("%s", (data.st_mode & S_IXUSR) ? "x" : "-");
+				printf("%s", (data.st_mode & S_IRGRP) ? "r" : "-");
+				printf("%s", (data.st_mode & S_IWGRP) ? "w" : "-");
+				printf("%s", (data.st_mode & S_IXGRP) ? "x" : "-");
+				printf("%s", (data.st_mode & S_IROTH) ? "r" : "-");
+				printf("%s", (data.st_mode & S_IWOTH) ? "w" : "-");
+				printf("%s", (data.st_mode & S_IXOTH) ? "x" : "-");
 				printf(" ");
 				printf("%d ", data.st_nlink);
 				printf("%s ", getpwuid(data.st_uid)->pw_name);
@@ -110,7 +106,7 @@ void listFileInfo(char *directoryName, char *fileName){
 
 				char *c_time_string = ctime(&data.st_mtim.tv_sec);
 				c_time_string[strlen(c_time_string) - 1] = '\0';
-				printf("%s ", c_time_string);
+				printf("%s ", c_time_string);	
 			}
 			else{
 				perror("Strcat Error");
@@ -227,6 +223,7 @@ void ls(char **arguments, int count){
 	}
 }
 
+<<<<<<< HEAD
 // void pinfo(char **arguments, int count){
 // 	int position = 0;
 // 	while(arguments[position] != '\0') ++position;
@@ -281,6 +278,12 @@ void executeInit(){
 	// implemented[4] = "pinfo";
 
 }
+=======
+struct builtins{
+	char *command;
+	void (*commandFunction)(char **arguments, int count);
+} implementedBuiltins[] = {{"cd", cd}, {"pwd", pwd}, {"echo", echo}, {"ls", ls}};
+>>>>>>> e237cb91848a5dd3531aff3d64410fc022264f7f
 
 void runCommand(char *command){
 
@@ -310,8 +313,8 @@ void runCommand(char *command){
 	}
 
 	for(int i=0; i<4; ++i){
-		if(strcmp(arguments[0], implemented[i]) == 0){
-			(implementedFunctions[i])(arguments, position);
+		if(strcmp(arguments[0], implementedBuiltins[i].command) == 0){
+			(implementedBuiltins[i].commandFunction)(arguments, position);
 			return;
 		}
 	}

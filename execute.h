@@ -1,2 +1,1 @@
-void runCommand(char *command);	
-void executeInit();
+void runCommand(char *command);

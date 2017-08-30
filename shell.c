@@ -6,7 +6,6 @@
 
 void init(){
 	initPrompt();
-	executeInit();
 }
 
 int main(){
