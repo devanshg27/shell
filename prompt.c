@@ -51,12 +51,12 @@ void showPrompt() {
 				break;
 			}
 		}
-		printf("<%s@%s:", username, system_name);
+		printf("<\033[0;36m%s\033[0m@\033[0;32m%s\033[0m:\033[1;33m", username, system_name);
 		if(isPrefix) {
-			printf("~%s> ", &current_directory[strlen(home_directory)]);
+			printf("~%s\033[0m> ", &current_directory[strlen(home_directory)]);
 		}
 		else {
-			printf("%s> ", current_directory);
+			printf("%s\033[0m> ", current_directory);
 		}
 	}
 	else perror("getcwd() error");

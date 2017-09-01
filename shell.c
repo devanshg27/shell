@@ -10,9 +10,6 @@ void init(){
 }
 
 int main(){
-// char *args[] = {"/bin/ls", "-la", (char *) 0 };
-// execvp("/bin/ls", args);
-
 	init();
 	while(1){
 		showPrompt();

@@ -5,7 +5,7 @@
 #include <tokenize.h>
 
 char **fetchCommands(){
-	int BLOCK_SIZE = 100, BUFFER_SIZE = 100, position = 0;
+	int BUFFER_SIZE = BLOCK_SIZE, position = 0;
 	char c = 0;
 
 	char *inp = malloc(sizeof(char) * BUFFER_SIZE);
@@ -21,7 +21,7 @@ char **fetchCommands(){
 		}
 		else if(c == '\n') break;
 		else{
-			if(position == BLOCK_SIZE){
+			if(position == BUFFER_SIZE){
 				BUFFER_SIZE += BLOCK_SIZE;
 				inp = realloc(inp, BUFFER_SIZE);
 				if(inp == NULL){
@@ -33,7 +33,7 @@ char **fetchCommands(){
 			++position;
 		}
 	}
-	if(position == BLOCK_SIZE){
+	if(position == BUFFER_SIZE){
 		++BUFFER_SIZE;
 		inp = realloc(inp, BUFFER_SIZE);
 		if(inp == NULL){

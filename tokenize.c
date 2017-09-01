@@ -5,8 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define BLOCK_SIZE 100
-
 char **tokenizeCommands(char *input){
 	int BUFFER_SIZE = BLOCK_SIZE, position = 0;
 	char **tokens = malloc(sizeof(char*) * BUFFER_SIZE);
