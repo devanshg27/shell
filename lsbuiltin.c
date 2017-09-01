@@ -152,6 +152,33 @@ void show(char *x, int l, int a){
 	closedir(directory);
 }
 
+void listData(char *argument, int L, int A, char *home_directory) {
+	char path[PATH_MAX + 1];
+	if(strcpy(path, argument) == NULL) {
+		perror("Strcpy Error");
+		exit(0);
+	}
+	if(strcmp(argument, "~") == 0) {
+		if(strcpy(path, home_directory) == NULL) {
+			perror("Strcpy Error");
+			exit(0);
+		}
+	}
+	else if(argument[0] == '~' && argument[1] == '/') {
+		if(strcpy(path, home_directory) == NULL) {
+			perror("Strcpy Error");
+			exit(0);
+		}
+		if(strcat(path, &argument[1]) == NULL) {
+			perror("Strcat Error");
+			exit(0);
+		}
+	}
+	int val = checkFile(path);
+	if(val) displayFile(path, L, A);
+	else show(path, L, A);
+}
+
 void ls(char **arguments, int count, char *home_directory){
 	int A = 0, L = 0, idx = 1;
 
@@ -179,9 +206,9 @@ void ls(char **arguments, int count, char *home_directory){
 	while(arguments[idx] != NULL){
 		if(arguments[idx][0] == '-'){
 			if((int)strlen(arguments[idx]) > 1);
-			else ++count;	
+			else ++count;
 		}
-		else ++count; 
+		else ++count;
 		++idx;
 	}
 
@@ -192,9 +219,7 @@ void ls(char **arguments, int count, char *home_directory){
 			else{
 				++pos;
 				if(count > 1) printf("%s:\n", arguments[idx]);
-				int val = checkFile(arguments[idx]);
-				if(val) displayFile(arguments[idx], L, A);
-				else show(arguments[idx], L, A);
+				listData(arguments[idx], L, A, home_directory);
 				yes = 1;
 				if(pos != count) printf("\n");
 			}
@@ -202,9 +227,7 @@ void ls(char **arguments, int count, char *home_directory){
 		else{
 			++pos;
 			if(count > 1) printf("%s:\n", arguments[idx]);
-			int val = checkFile(arguments[idx]);
-			if(val) displayFile(arguments[idx], L, A);
-			else show(arguments[idx], L, A);
+			listData(arguments[idx], L, A, home_directory);
 			yes = 1;			
 			if(pos != count) printf("\n");	
 		}
