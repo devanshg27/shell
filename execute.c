@@ -1,5 +1,4 @@
 #include <execute.h>
-#include <stdio.h>
 #include <time.h>
 #include <string.h>
 #include <stdlib.h>
@@ -12,7 +11,6 @@
 #include <sys/types.h>
 #include <pwd.h>
 #include <dirent.h>
-#include <stdlib.h>
 #include <grp.h>
 #include <fcntl.h>
 
@@ -345,36 +343,79 @@ void ls(char **arguments, int count){
 	}
 }
 
-// void pinfo(char **arguments, int count){
-// 	int position = 0;
-// 	while(arguments[position] != '\0') ++position;
-// 	int pid = 0;
-// 	if(position == 1) pid = getpid();
-// 	else if(position == 2){
-// 		for(int i=0; i<strlen(arguments[1]); ++i){
-// 			pid	= pid * 10;
-// 			pid += arguments[1][i] - '0';
-// 		}
-// 	}
-// 	else{
-// 		printf("ERROR\n");
-// 		return;	
-// 	} 
-// 	printf("pid %d\n", pid);
+void pinfo(char **arguments, int count){
+	int position = 0;
+	while(arguments[position] != '\0') ++position;
+	int pid = 0;
+	if(position == 1) pid = getpid();
+	else if(position == 2){
+		for(int i=0; i<strlen(arguments[1]); ++i){
+			pid	= pid * 10;
+			pid += arguments[1][i] - '0';
+		}
+	}
+	else{
+		perror("Usage Error");
+		exit(0);
+	} 
+	printf("pid -- %d\n", pid);
 
-// 	char *file = "/proc/";
-// 	strcat(statPath, pid);
-// 	strcat(statPath, "/exe");
+	char PID[100];
+	PID[0] = '/'; PID[1] = 'p'; PID[2] = 'r'; PID[3] = 'o'; PID[4] = 'c'; PID[5] = '/';
+	int t = pid, tt = pid, c = 0;
+	while(t){
+		t /= 10;
+		++c;
+	}
+	t = 6 + c - 1;
+	while(tt){
+		PID[t--] = ('0' + (tt % 10));
+		tt /= 10;
+	}
+	t = 6 + c;
+	PID[t] = '/'; PID[t + 1] = 'e'; PID[t + 2] = 'x'; PID[t + 3] = 'e'; PID[t + 4] = '\0';
 
-// }
-// pid, , status, memory
-// 0, 1, 2, 22
+	char *link[4096];
+	for(int i=0; i<4096; ++i) link[i] = '\0';
 
+	int val = readlink(PID, link, 4095);
+
+	PID[t + 1] = 's';
+	PID[t + 2] = 't';
+	PID[t + 3] = 'a';
+	PID[t + 4] = 't';
+	PID[t + 5] = '\0';
+
+	FILE* fp = fopen(PID, "r");
+
+	if(fp != NULL){
+		char *b = malloc(sizeof(char) * 4096);
+		fscanf(fp, " %4096s", b);
+		fscanf(fp, " %4096s", b);
+		fscanf(fp, " %4096s", b);
+		printf("Process Status -- %s\n", b);
+
+		for(int i=0; i<20; ++i) fscanf(fp, " %4096s", b);
+		printf("Virtual Memory -- %s\n", b);
+
+		fclose(fp);
+	}	
+	else{
+		perror("File Open Error");
+		exit(0);
+	}
+
+	if(val == -1){
+		perror("Readlink Error");
+		exit(0);
+	}
+	else printf("Executable path -- %s\n", link);
+}
 
 struct builtins{
 	char *command;
 	void (*commandFunction)(char **arguments, int count);
-} implementedBuiltins[] = {{"cd", cd}, {"pwd", pwd}, {"echo", echo}, {"ls", ls}, {"nightswatch", nightswatch}};
+} implementedBuiltins[] = {{"cd", cd}, {"pwd", pwd}, {"echo", echo}, {"ls", ls}, {"nightswatch", nightswatch}, {"pinfo", pinfo}};
 
 void runCommand(char *command){
 
