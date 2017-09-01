@@ -1,13 +1,13 @@
 CC=gcc
 CFLAGS=-I.
-DEPS = prompt.h input.h tokenize.h execute.h
-OBJ = prompt.o shell.o input.o tokenize.o execute.o
+DEPS = prompt.h input.h tokenize.h execute.h cdbuiltin.h pwdbuiltin.h echobuiltin.h lsbuiltin.h nightswatch.h pinfo.h
+OBJ = prompt.o shell.o input.o tokenize.o execute.o cdbuiltin.o pwdbuiltin.o echobuiltin.o lsbuiltin.o nightswatch.o pinfo.o
 
 %.o: %.c $(DEPS)
-	$(CC) -c -g -o $@ $< $(CFLAGS)
+	$(CC) -c -o $@ $< $(CFLAGS)
 
 a.out: $(OBJ)
-	$(CC) -g -o $@ $^ $(CFLAGS)
+	$(CC) -o $@ $^ $(CFLAGS)
 
 .PHONY: clean
 
