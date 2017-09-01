@@ -225,10 +225,38 @@ void echo(char **arguments, int count){
 	printf("\n");
 }
 
+void display(struct stat data){
+	if(S_ISDIR(data.st_mode)) printf("d");
+	else if(S_ISCHR(data.st_mode)) printf("c");
+	else if(S_ISLNK(data.st_mode)) printf("l");
+	else if(S_ISFIFO(data.st_mode)) printf("p");
+	else if(S_ISSOCK(data.st_mode)) printf("s");
+	else if(S_ISBLK(data.st_mode)) printf("b");
+	else printf("-");
+	printf("%s", (data.st_mode & S_IRUSR) ? "r" : "-");
+	printf("%s", (data.st_mode & S_IWUSR) ? "w" : "-");
+	printf("%s", (data.st_mode & S_IXUSR) ? "x" : "-");
+	printf("%s", (data.st_mode & S_IRGRP) ? "r" : "-");
+	printf("%s", (data.st_mode & S_IWGRP) ? "w" : "-");
+	printf("%s", (data.st_mode & S_IXGRP) ? "x" : "-");
+	printf("%s", (data.st_mode & S_IROTH) ? "r" : "-");
+	printf("%s", (data.st_mode & S_IWOTH) ? "w" : "-");
+	printf("%s", (data.st_mode & S_IXOTH) ? "x" : "-");
+	printf(" ");
+	printf("%3d ", data.st_nlink);
+	printf("%10s ", getpwuid(data.st_uid)->pw_name);
+	printf("%10s ", getgrgid(data.st_gid)->gr_name);
+	printf("%10d ", data.st_size);
+
+	char *c_time_string = ctime(&data.st_mtim.tv_sec);
+	c_time_string[strlen(c_time_string) - 1] = '\0';
+	printf("%s ", c_time_string);
+
+}
+
 void listFileInfo(char *directoryName, char *fileName){
 	struct stat data;
 	char filePath[PATH_MAX + 1];
-
 	if(strcpy(filePath, directoryName) != NULL){
 		if(strcat(filePath, "/") != NULL){
 			if(strcat(filePath, fileName) != NULL){
@@ -237,31 +265,7 @@ void listFileInfo(char *directoryName, char *fileName){
 					perror("Stat Error");
 					exit(0);
 				}
-				if(S_ISDIR(data.st_mode)) printf("d");
-				else if(S_ISCHR(data.st_mode)) printf("c");
-				else if(S_ISLNK(data.st_mode)) printf("l");
-				else if(S_ISFIFO(data.st_mode)) printf("p");
-				else if(S_ISSOCK(data.st_mode)) printf("s");
-				else if(S_ISBLK(data.st_mode)) printf("b");
-				else printf("-");
-				printf("%s", (data.st_mode & S_IRUSR) ? "r" : "-");
-				printf("%s", (data.st_mode & S_IWUSR) ? "w" : "-");
-				printf("%s", (data.st_mode & S_IXUSR) ? "x" : "-");
-				printf("%s", (data.st_mode & S_IRGRP) ? "r" : "-");
-				printf("%s", (data.st_mode & S_IWGRP) ? "w" : "-");
-				printf("%s", (data.st_mode & S_IXGRP) ? "x" : "-");
-				printf("%s", (data.st_mode & S_IROTH) ? "r" : "-");
-				printf("%s", (data.st_mode & S_IWOTH) ? "w" : "-");
-				printf("%s", (data.st_mode & S_IXOTH) ? "x" : "-");
-				printf(" ");
-				printf("%3d ", data.st_nlink);
-				printf("%10s ", getpwuid(data.st_uid)->pw_name);
-				printf("%10s ", getgrgid(data.st_gid)->gr_name);
-				printf("%10d ", data.st_size);
-
-				char *c_time_string = ctime(&data.st_mtim.tv_sec);
-				c_time_string[strlen(c_time_string) - 1] = '\0';
-				printf("%s ", c_time_string);	
+				display(data);
 			}
 			else{
 				perror("Strcat Error");
@@ -280,6 +284,7 @@ void listFileInfo(char *directoryName, char *fileName){
 }
 
 void show(char *x, int l, int a){
+
 	DIR* directory;
 	struct dirent *current;
 
@@ -307,7 +312,31 @@ void show(char *x, int l, int a){
 			printf("%s\n", current->d_name);				
 		} 
 	}
+}
 
+void displayFile(char *fileName, int l, int a){
+	struct stat data; 
+	if(l){
+		if(stat(fileName, &data) != -1){
+			display(data);
+		}
+		else{
+			perror("Stat Error");
+			exit(0);
+		}
+	}
+	printf("%s\n", fileName);
+}
+
+int checkFile(char *fileName){
+	struct stat data;
+	int val = stat(fileName, &data);
+	if(val == -1){
+		perror("Stat Error");
+		exit(0);
+	}
+	else if(S_ISDIR(data.st_mode) == 0) return 1;
+	else return 0;
 }
 
 void ls(char **arguments, int count){
@@ -350,7 +379,9 @@ void ls(char **arguments, int count){
 			else{
 				++pos;
 				if(count > 1) printf("%s:\n", arguments[idx]);
-				show(arguments[idx], L, A);
+				int val = checkFile(arguments[idx]);
+				if(val) displayFile(arguments[idx], L, A);
+				else show(arguments[idx], L, A);
 				yes = 1;
 				if(pos != count) printf("\n");
 			}
@@ -358,7 +389,9 @@ void ls(char **arguments, int count){
 		else{
 			++pos;
 			if(count > 1) printf("%s:\n", arguments[idx]);
-			show(arguments[idx], L, A);
+			int val = checkFile(arguments[idx]);
+			if(val) displayFile(arguments[idx], L, A);
+			else show(arguments[idx], L, A);
 			yes = 1;			
 			if(pos != count) printf("\n");	
 		}
@@ -374,7 +407,11 @@ void ls(char **arguments, int count){
 		}
 
 		current = ".";
-		show(current, L, A);
+
+		int val = checkFile(current);
+
+		if(val) displayFile(current, L, A);
+		else show(current, L, A);
 	}
 }
 
