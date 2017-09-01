@@ -18,13 +18,13 @@ int checkFile(char *fileName){
 	int val = stat(fileName, &data);
 	if(val == -1){
 		perror("Stat Error");
-		exit(0);
+		return -1;
 	}
 	else if(S_ISDIR(data.st_mode) == 0) return 1;
 	else return 0;
 }
 
-void printFileName(char *dirName, char *fileName){
+int printFileName(char *dirName, char *fileName){
 	struct stat data;
 	char fullFilePath[PATH_MAX + 1];
 	strcpy(fullFilePath, dirName);
@@ -33,7 +33,7 @@ void printFileName(char *dirName, char *fileName){
 	int val = stat(fullFilePath, &data);
 	if(val == -1){
 		perror("Stat Error");
-		exit(0);
+		return 1;
 	}
 	else if(S_ISDIR(data.st_mode)) printf("\033[1;34m");
 	else if(S_ISCHR(data.st_mode)) printf("\033[40;33;1m");
@@ -43,6 +43,7 @@ void printFileName(char *dirName, char *fileName){
 	else if(S_ISBLK(data.st_mode)) printf("\033[40;33;1m");
 	else if(data.st_mode & S_IXUSR) printf("\033[32;1m");
 	printf("%s\033[0m", fileName);
+	return 0;
 }
 
 void display(struct stat data){
@@ -73,7 +74,7 @@ void display(struct stat data){
 	printf("%s ", c_time_string);
 }
 
-void displayFile(char *fileName, int l, int a){
+int displayFile(char *fileName, int l, int a){
 	struct stat data; 
 	if(l){
 		if(stat(fileName, &data) != -1){
@@ -81,14 +82,16 @@ void displayFile(char *fileName, int l, int a){
 		}
 		else{
 			perror("Stat Error");
-			exit(0);
+			return 1;
 		}
 	}
-	printFileName(".", fileName);
+	int error = printFileName(".", fileName);
+	if(error) return 1;
 	printf("\n");
+	return 0;
 }
 
-void listFileInfo(char *directoryName, char *fileName){
+int listFileInfo(char *directoryName, char *fileName){
 	struct stat data;
 	char filePath[PATH_MAX + 1];
 	if(strcpy(filePath, directoryName) != NULL){
@@ -96,28 +99,28 @@ void listFileInfo(char *directoryName, char *fileName){
 			if(strcat(filePath, fileName) != NULL){
 				int val = stat(filePath, &data);
 				if(val == -1){
-					perror("Stat Error");
-					exit(0);
+					return 1;
 				}
 				display(data);
 			}
 			else{
 				perror("Strcat Error");
-				exit(0);
+				return 1;
 			}
 		}
 		else{
 			perror("Strcat Error");
-			exit(0);
+			return 1;
 		}
 	}
 	else{
 		perror("Strcpy Error");
-		exit(0);
+		return 1;
 	}
+	return 0;
 }
 
-void show(char *x, int l, int a){
+int show(char *x, int l, int a){
 
 	DIR* directory;
 	struct dirent *current;
@@ -125,7 +128,7 @@ void show(char *x, int l, int a){
 	directory = opendir(x);
 	if(directory == NULL){
 		perror("Opendir Error");
-		exit(0);
+		return 1;
 	}
 
 	current = readdir(directory);
@@ -134,58 +137,66 @@ void show(char *x, int l, int a){
 		if((current->d_name)[0] == '.'){
 			if(a){
 				if(l){
-					listFileInfo(x, current->d_name);
+					if(listFileInfo(x, current->d_name)) return 1;
 				}
-				printFileName(x, current->d_name);
+				if(printFileName(x, current->d_name)) return 1;
 				printf("\n");
 			} 
 		}
 		else{
 			if(l){
-				listFileInfo(x, current->d_name);
+				if(listFileInfo(x, current->d_name)) return 1;
 			}
-			printFileName(x, current->d_name);
+			if(printFileName(x, current->d_name)) return 1;
 			printf("\n");
 		} 
 	}
 
 	closedir(directory);
+	return 0;
 }
 
-void listData(char *argument, int L, int A, char *home_directory) {
+int listData(char *argument, int L, int A, char *home_directory) {
 	char path[PATH_MAX + 1];
 	if(strcpy(path, argument) == NULL) {
 		perror("Strcpy Error");
-		exit(0);
+		return 1;
 	}
 	if(strcmp(argument, "~") == 0) {
 		if(strcpy(path, home_directory) == NULL) {
 			perror("Strcpy Error");
-			exit(0);
+			return 1;
 		}
 	}
 	else if(argument[0] == '~' && argument[1] == '/') {
 		if(strcpy(path, home_directory) == NULL) {
 			perror("Strcpy Error");
-			exit(0);
+			return 1;
 		}
 		if(strcat(path, &argument[1]) == NULL) {
 			perror("Strcat Error");
-			exit(0);
+			return 1;
 		}
 	}
 	int val = checkFile(path);
-	if(val) displayFile(path, L, A);
-	else show(path, L, A);
+	if(val == -1) return 1;
+	else if(val == 1){
+		int val = displayFile(path, L, A);
+		if(val) return 1;
+	} 
+	else{
+		if(show(path, L, A)) return 1;
+	} 
+	return 0;
 }
 
-void ls(char **arguments, int count, char *home_directory){
+int ls(char **arguments, int count, char *home_directory){
 	int A = 0, L = 0, idx = 1;
 
 	char *location = malloc(sizeof(char) * PATH_MAX);
 	if((location) == NULL){
 		perror("Malloc Failed");
-		exit(0);
+		return 1;
 	}
 
 	while(arguments[idx] != NULL){
@@ -194,8 +205,8 @@ void ls(char **arguments, int count, char *home_directory){
 				if(arguments[idx][j] == 'a') A = 1;
 				else if(arguments[idx][j] == 'l') L = 1;
 				else{
-					printf("Invalid Flag");
-					return;
+					perror("Invalid Flag");
+					return 1;
 				}
 			}
 		}
@@ -219,7 +230,8 @@ void ls(char **arguments, int count, char *home_directory){
 			else{
 				++pos;
 				if(count > 1) printf("%s:\n", arguments[idx]);
-				listData(arguments[idx], L, A, home_directory);
+				int error = listData(arguments[idx], L, A, home_directory);
+				if(error) return 1;
 				yes = 1;
 				if(pos != count) printf("\n");
 			}
@@ -227,7 +239,8 @@ void ls(char **arguments, int count, char *home_directory){
 		else{
 			++pos;
 			if(count > 1) printf("%s:\n", arguments[idx]);
-			listData(arguments[idx], L, A, home_directory);
+			int error = listData(arguments[idx], L, A, home_directory);
+			if(error) return 1;
 			yes = 1;			
 			if(pos != count) printf("\n");	
 		}
@@ -239,14 +252,16 @@ void ls(char **arguments, int count, char *home_directory){
 		char *current = malloc(sizeof(char) * 2);
 		if(current == NULL){
 			perror("Malloc Failed");
-			exit(0);
+			return 1;
 		}
 
 		current = ".";
 
 		int val = checkFile(current);
-
+		if(val == -1) return 1;
 		if(val) displayFile(current, L, A);
 		else show(current, L, A);
 	}
+
+	return 0;
 }

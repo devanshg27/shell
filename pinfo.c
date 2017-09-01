@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-void pinfo(char **arguments, int count, char *home_directory){
+int pinfo(char **arguments, int count, char *home_directory){
 	int pid = 0;
 	if(count == 1) pid = getpid();
 	else if(count == 2){
@@ -16,7 +16,7 @@ void pinfo(char **arguments, int count, char *home_directory){
 	}
 	else{
 		perror("Usage Error");
-		exit(0);
+		return 1;
 	} 
 	printf("pid -- %d\n", pid);
 
@@ -62,12 +62,13 @@ void pinfo(char **arguments, int count, char *home_directory){
 	}	
 	else{
 		perror("File Open Error");
-		exit(0);
+		return 1;
 	}
 
 	if(val == -1){
 		perror("Readlink Error");
-		exit(0);
+		return 1;
 	}
 	else printf("Executable path -- %s\n", link);
+	return 0;
 }

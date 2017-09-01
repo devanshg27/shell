@@ -40,7 +40,7 @@ void initPrompt() {
 
 }
 
-void showPrompt() {
+int showPrompt() {
 	char current_directory[PATH_MAX + 1];
 	int isPrefix = 1;
 	
@@ -58,6 +58,10 @@ void showPrompt() {
 		else {
 			printf("%s\033[0m> ", current_directory);
 		}
+		return 0;
 	}
-	else perror("getcwd() error");
+	else{
+		perror("getcwd() error");
+		return 1;	
+	} 
 }

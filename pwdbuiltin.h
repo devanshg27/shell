@@ -1,1 +1,1 @@
-void pwd(char **arguments, int count, char *home_directory);
+int pwd(char **arguments, int count, char *home_directory);

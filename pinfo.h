@@ -1,1 +1,1 @@
-void pinfo(char **arguments, int count, char *home_directory);
+int pinfo(char **arguments, int count, char *home_directory);

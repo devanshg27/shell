@@ -22,16 +22,16 @@ void initExecute(){
 	}
 }
 
-void runCommandinBackground(char **arguments) {
+int runCommandinBackground(char **arguments) {
 	pid_t pid = fork();
 	if(pid == -1){
 		perror("Fork Error");
-		exit(0);
+		return 1;
 	}
 	else if(pid==0){
 		execvp(arguments[0], arguments);
 		perror("Execvp Error");
-		exit(0);
+		return 1;
 	}
 	else{
 
@@ -39,29 +39,29 @@ void runCommandinBackground(char **arguments) {
 
 		if(waitpid(pid, &status, 0) == -1){
 			perror("waitpid() failed");
-			exit(0);
+			return 1;
 		}
 		if(WIFEXITED(status)){
 			int es = WEXITSTATUS(status);
 			printf("%s with pid %d exited with status %d\n", arguments[0], pid, es);
-			exit(0);
+			return 0;
 		}
 	}
 }
 
 struct builtins{
 	char *command;
-	void (*commandFunction)(char **arguments, int count, char *home_directory);
+	int (*commandFunction)(char **arguments, int count, char *home_directory);
 } implementedBuiltins[] = {{"cd", cd}, {"pwd", pwd}, {"echo", echo}, {"ls", ls}, {"nightswatch", nightswatch}, {"pinfo", pinfo}};
 
-void runCommand(char *command){
+int runCommand(char *command){
 
 	int BUFFER_SIZE = 100, position = 0;
 
 	char **arguments = malloc(sizeof(char*) * BUFFER_SIZE);
 	if(arguments == NULL){
 		perror("Malloc Failed");
-		exit(0);
+		return 1;
 	}
 
 	char *argument;
@@ -75,7 +75,7 @@ void runCommand(char *command){
 			arguments = realloc(arguments, BUFFER_SIZE * sizeof(char*));
 			if(arguments == NULL){
 				perror("Realloc Error");
-				exit(0);
+				return 1;
 			}
 		}
 		argument = strtok(NULL, " \t");
@@ -86,8 +86,8 @@ void runCommand(char *command){
 	int numberOfImplementedBuiltins = sizeof(implementedBuiltins)/sizeof(implementedBuiltins[0]);
 	for(int i=0; i<numberOfImplementedBuiltins; ++i){
 		if(strcmp(arguments[0], implementedBuiltins[i].command) == 0){
-			(implementedBuiltins[i].commandFunction)(arguments, position, home_directory);
-			return;
+			int val = (implementedBuiltins[i].commandFunction)(arguments, position, home_directory);
+			return val;
 		}
 	}
 
@@ -97,29 +97,31 @@ void runCommand(char *command){
 		pid_t pid = fork();
 		if(pid == -1){
 			perror("Fork Error");
-			exit(0);
+			return 1;
 		}
 		else if(pid==0){
-			runCommandinBackground(arguments);
+			int val = runCommandinBackground(arguments);
+			if(val) return 1;
 		}
 	}
 	else{
 		pid_t pid = fork();
 		if(pid == -1){
 			perror("Fork Error");
-			exit(0);
+			return 1;
 		}
 		else if(pid==0){
 			execvp(arguments[0], arguments);
 			perror("Execvp Error");
-			exit(0);
+			return 1;
 		}
 		else{
 			int val = wait(NULL);
 			if(val == -1){
 				perror("Wait Error");
-				exit(0);
+				return 1;
 			}
 		}
 	}
+	return 0;
 }

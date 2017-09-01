@@ -4,8 +4,11 @@
 #include <string.h>
 #include <stdio.h>
 
-void cd(char **arguments, int count, char *home_directory){
-	if(count > 2) printf("Error: Invalid Usage\n");
+int cd(char **arguments, int count, char *home_directory){
+	if(count > 2){
+		perror("Error: Invalid Usage\n");
+		return 1;	
+	} 
 	else{
 		char *destinationDirectory;
 		if(count == 1) destinationDirectory = home_directory;
@@ -17,21 +20,22 @@ void cd(char **arguments, int count, char *home_directory){
 			destinationDirectory = malloc(strlen(home_directory) + strlen(arguments[1]));
 			if(destinationDirectory == NULL) {
 				perror("Malloc Failed");
-				exit(0);
+				return 1;
 			}
 			if(strcpy(destinationDirectory, home_directory) == NULL) {
 				perror("Strcpy Error");
-				exit(0);
+				return 1;
 			}
 			if(strcat(destinationDirectory, &arguments[1][1]) == NULL) {
 				perror("Strcat Error");
-				exit(0);
+				return 1;
 			}
 		}
 		int val = chdir(destinationDirectory);
 		if(val == -1){
 			perror("Chdir Error");
-			exit(0);
+			return 1;
 		}
+		return 0;
 	} 
 }

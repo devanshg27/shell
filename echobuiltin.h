@@ -1,1 +1,1 @@
-void echo(char **arguments, int count, char *home_directory);
+int echo(char **arguments, int count, char *home_directory);

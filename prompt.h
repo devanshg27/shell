@@ -1,2 +1,2 @@
 void initPrompt();
-void showPrompt();
+int showPrompt();

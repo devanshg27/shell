@@ -1,1 +1,1 @@
-void cd(char **arguments, int count, char *home_directory);
+int cd(char **arguments, int count, char *home_directory);

@@ -31,11 +31,11 @@ int wasKeyPressed() {
 	return bytesWaiting;
 }
 
-void interrupt() {
+int interrupt() {
 	int fd_file = open("/proc/interrupts", O_RDONLY);
 	if(fd_file<0){
 		perror("Open Error");
-		exit(0);
+		return 1;
 	}
 	else{
 		char buf[100001];
@@ -59,13 +59,14 @@ void interrupt() {
 		}
 	}
 	close(fd_file);
+	return 0;
 }
 
-void dirty() {
+int dirty() {
 	int fd_file = open("/proc/meminfo", O_RDONLY);
 	if(fd_file<0){
 		perror("Open Error");
-		exit(0);
+		return 1;
 	}
 	else{
 		char buf[100001];
@@ -84,27 +85,28 @@ void dirty() {
 		}
 	}
 	close(fd_file);
+	return 0;
 }
 
 struct nightswatchCommands{
 	char *command;
-	void (*commandFunction)();
+	int (*commandFunction)();
 } nightswatchCommandsList[] = {{"interrupt", interrupt}, {"dirty", dirty}};
 
-void nightswatch(char **arguments, int count, char *home_directory){
+int nightswatch(char **arguments, int count, char *home_directory){
 	double timeInterval;
 	if(count != 4){
-		printf("Error\n");
-		return;
+		perror("Error\n");
+		return 1;
 	}
 	if(strcmp(arguments[1], "-n") != 0){
-		printf("Error\n");
-		return;
+		perror("Error\n");
+		return 1;
 	}
 	timeInterval = atof(arguments[2]);
 	if(timeInterval <= 0.0){
-		printf("Error\n");
-		return;
+		perror("Error\n");
+		return 1;
 	}
 	int lenNightswatchCommands = sizeof(nightswatchCommandsList)/sizeof(nightswatchCommandsList[0]);
 	for(int i=0; i<lenNightswatchCommands; ++i) {
@@ -115,7 +117,9 @@ void nightswatch(char **arguments, int count, char *home_directory){
 			while(1){
 				time(&now);
 				if(firstRun || difftime(now, prev) >= timeInterval){
-					nightswatchCommandsList[i].commandFunction();
+					if(nightswatchCommandsList[i].commandFunction()){
+						return 1;
+					}
 					prev = now;
 					firstRun = 0;
 				}
@@ -125,11 +129,12 @@ void nightswatch(char **arguments, int count, char *home_directory){
 					if(ch == 'q'){
 						resetTermios();
 						while(wasKeyPressed()) scanf("%c", &ch);
-						return;
+						return 0;
 					}
 				}
 			}
 		}
 	}
-	printf("Error\n");
+	perror("Error\n");
+	return 1;
 }

@@ -12,17 +12,19 @@ void init(){
 int main(){
 	init();
 	while(1){
-		showPrompt();
+		int error = showPrompt();
+		if(error) continue;
 		int val = fflush(stdout);
 		if(val != 0){
 			perror("Error in Flushing Output\n");
-			exit(0);
+			continue;
 		}
 		char **commands = fetchCommands();
 		int position = 0;
 		while(1){
 			if(commands[position] == NULL) break;
-			runCommand(commands[position]);
+			int val = runCommand(commands[position]);
+			if(val == 1) break;
 			++position;
 		}
 	}
