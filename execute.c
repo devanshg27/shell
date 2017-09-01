@@ -243,10 +243,10 @@ void display(struct stat data){
 	printf("%s", (data.st_mode & S_IWOTH) ? "w" : "-");
 	printf("%s", (data.st_mode & S_IXOTH) ? "x" : "-");
 	printf(" ");
-	printf("%3d ", data.st_nlink);
+	printf("%3lld ", (long long)data.st_nlink);
 	printf("%10s ", getpwuid(data.st_uid)->pw_name);
 	printf("%10s ", getgrgid(data.st_gid)->gr_name);
-	printf("%10d ", data.st_size);
+	printf("%10lld ", (long long)data.st_size);
 
 	char *c_time_string = ctime(&data.st_mtim.tv_sec);
 	c_time_string[strlen(c_time_string) - 1] = '\0';
