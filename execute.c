@@ -13,8 +13,25 @@
 #include <dirent.h>
 #include <grp.h>
 #include <fcntl.h>
+#include <termios.h>
+#include <sys/ioctl.h>
 
 char home_directory[PATH_MAX + 1];
+
+/* Initialize new terminal i/o settings */
+static struct termios old, new1;
+void initTermios(int echo) {
+	tcgetattr(0, &old); /* grab old terminal i/o settings */
+	new1 = old; /* make new settings same as old settings */
+	new1.c_lflag &= ~ICANON; /* disable buffered i/o */
+	new1.c_lflag &= echo ? ECHO : ~ECHO; /* set echo mode */
+	tcsetattr(0, TCSANOW, &new1); /* use these new terminal i/o settings now */
+}
+
+/* Restore old terminal i/o settings */
+void resetTermios(void) {
+	tcsetattr(0, TCSANOW, &old);
+}
 
 void initExecute(){
 	if(getcwd(home_directory, PATH_MAX + 1) == NULL){
@@ -22,6 +39,72 @@ void initExecute(){
 		exit(0);
 	}
 }
+
+int wasKeyPressed() {
+	int bytesWaiting;
+	ioctl(STDIN_FILENO, FIONREAD, &bytesWaiting);
+	return bytesWaiting;
+}
+
+void interrupt() {
+	int fd_file = open("/proc/interrupts", O_RDONLY);
+	if(fd_file<0){
+		perror("Open Error");
+		exit(0);
+	}
+	else{
+		char buf[100001];
+		read(fd_file, buf, 100000);
+		char *p=strtok(buf, "\n");
+		printf("%s\n", p + 4);
+		while(p!=NULL){
+			if(strstr (p, "i8042") != NULL){
+				char *infoLine = p;
+				while(infoLine) {
+					if(('a' <= *infoLine && *infoLine <= 'z') || ('A' <= *infoLine && *infoLine <= 'Z')){
+						*infoLine = '\0';
+						break;
+					}
+					++infoLine;
+				}
+				printf("%s\n", p + 4);
+				break;
+			}
+			p=strtok(NULL, "\n");
+		}
+	}
+	close(fd_file);
+}
+
+void dirty() {
+	int fd_file = open("/proc/meminfo", O_RDONLY);
+	if(fd_file<0){
+		perror("Open Error");
+		exit(0);
+	}
+	else{
+		char buf[100001];
+		read(fd_file, buf, 100000);
+		char *p=strtok(buf, "\n");
+		while(p!=NULL){
+			if(strstr (p, "Dirty:") != NULL){
+				while(p) {
+					if('0' <= *p && *p <= '9') break;
+					++p;
+				}
+				printf("%s\n", p);
+				break;
+			}
+			p=strtok(NULL, "\n");
+		}
+	}
+	close(fd_file);
+}
+
+struct nightswatchCommands{
+	char *command;
+	void (*commandFunction)();
+} nightswatchCommandsList[] = {{"interrupt", interrupt}, {"dirty", dirty}};
 
 void nightswatch(char **arguments, int count){
 	double timeInterval;
@@ -38,81 +121,32 @@ void nightswatch(char **arguments, int count){
 		printf("Error\n");
 		return;
 	}
-	if(strcmp(arguments[3], "interrupt") == 0){
-		time_t now, prev;
-		int firstRun = 1;
-		while(1){
-			time(&now);
-			if(firstRun || difftime(now, prev) >= timeInterval){
-				int fd_file = open("/proc/interrupts", O_RDONLY);
-				if(fd_file<0){
-					perror("Open Error");
-					exit(0);
+	int lenNightswatchCommands = sizeof(nightswatchCommandsList)/sizeof(nightswatchCommandsList[0]);
+	for(int i=0; i<lenNightswatchCommands; ++i) {
+		if(strcmp(arguments[3], nightswatchCommandsList[i].command) == 0){
+			time_t now, prev;
+			int firstRun = 1;
+			initTermios(0);
+			while(1){
+				time(&now);
+				if(firstRun || difftime(now, prev) >= timeInterval){
+					nightswatchCommandsList[i].commandFunction();
+					prev = now;
+					firstRun = 0;
 				}
-				else{
-					char buf[100001];
-					read(fd_file, buf, 100000);
-					char *p=strtok(buf, "\n");
-					printf("%s\n", p);
-					while(p!=NULL){
-						if(strstr (p, "i8042") != NULL){
-							char *infoLine = p;
-							while(infoLine) {
-								if(('a' <= *infoLine && *infoLine <= 'z') || ('A' <= *infoLine && *infoLine <= 'Z')){
-									*infoLine = '\0';
-									break;
-								}
-								++infoLine;
-							}
-							printf("%s\n", p);
-							break;
-						}
-						p=strtok(NULL, "\n");
+				while(wasKeyPressed()){
+					char ch;
+					scanf("%c", &ch);
+					if(ch == 'q'){
+						resetTermios();
+						while(wasKeyPressed()) scanf("%c", &ch);
+						return;
 					}
 				}
-				prev = now;
-				firstRun = 0;
-				close(fd_file);
 			}
 		}
 	}
-	else if(strcmp(arguments[3], "dirty") == 0){
-		time_t now, prev;
-		int firstRun = 1;
-		while(1){
-			time(&now);
-			if(firstRun || difftime(now, prev) >= timeInterval){
-				int fd_file = open("/proc/meminfo", O_RDONLY);
-				if(fd_file<0){
-					perror("Open Error");
-					exit(0);
-				}
-				else{
-					char buf[100001];
-					read(fd_file, buf, 100000);
-					char *p=strtok(buf, "\n");
-					while(p!=NULL){
-						if(strstr (p, "Dirty:") != NULL){
-							while(p) {
-								if('0' <= *p && *p <= '9') break;
-								++p;
-							}
-							printf("%s\n", p);
-							break;
-						}
-						p=strtok(NULL, "\n");
-					}
-				}
-				prev = now;
-				firstRun = 0;
-				close(fd_file);
-			}
-		}
-	}
-	else{
-		printf("Error\n");
-		return;
-	}
+	printf("Error\n");
 }
 
 void runCommandinBackground(char **arguments) {
@@ -137,6 +171,7 @@ void runCommandinBackground(char **arguments) {
 		if(WIFEXITED(status)){
 			int es = WEXITSTATUS(status);
 			printf("%s with pid %d exited with status %d\n", arguments[0], pid, es);
+			exit(0);
 		}
 	}
 }
@@ -219,9 +254,9 @@ void listFileInfo(char *directoryName, char *fileName){
 				printf("%s", (data.st_mode & S_IWOTH) ? "w" : "-");
 				printf("%s", (data.st_mode & S_IXOTH) ? "x" : "-");
 				printf(" ");
-				printf("%d ", data.st_nlink);
-				printf("%s ", getpwuid(data.st_uid)->pw_name);
-				printf("%s ", getgrgid(data.st_gid)->gr_name);
+				printf("%3d ", data.st_nlink);
+				printf("%10s ", getpwuid(data.st_uid)->pw_name);
+				printf("%10s ", getgrgid(data.st_gid)->gr_name);
 				printf("%10d ", data.st_size);
 
 				char *c_time_string = ctime(&data.st_mtim.tv_sec);
@@ -344,11 +379,9 @@ void ls(char **arguments, int count){
 }
 
 void pinfo(char **arguments, int count){
-	int position = 0;
-	while(arguments[position] != '\0') ++position;
 	int pid = 0;
-	if(position == 1) pid = getpid();
-	else if(position == 2){
+	if(count == 1) pid = getpid();
+	else if(count == 2){
 		for(int i=0; i<strlen(arguments[1]); ++i){
 			pid	= pid * 10;
 			pid += arguments[1][i] - '0';
@@ -375,7 +408,7 @@ void pinfo(char **arguments, int count){
 	t = 6 + c;
 	PID[t] = '/'; PID[t + 1] = 'e'; PID[t + 2] = 'x'; PID[t + 3] = 'e'; PID[t + 4] = '\0';
 
-	char *link[4096];
+	char link[4096];
 	for(int i=0; i<4096; ++i) link[i] = '\0';
 
 	int val = readlink(PID, link, 4095);
