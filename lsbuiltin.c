@@ -29,7 +29,7 @@ int printFileName(char *dirName, char *fileName){
 	struct stat data;
 	char fullFilePath[PATH_MAX + 1];
 	strcpy(fullFilePath, dirName);
-	strcat(fullFilePath, "/");
+	if(strlen(fileName)) strcat(fullFilePath, "/");
 	strcat(fullFilePath, fileName);
 	int val = stat(fullFilePath, &data);
 	if(val == -1){
@@ -43,7 +43,8 @@ int printFileName(char *dirName, char *fileName){
 	else if(S_ISSOCK(data.st_mode)) printf("\033[01;35m");
 	else if(S_ISBLK(data.st_mode)) printf("\033[40;33;1m");
 	else if(data.st_mode & S_IXUSR) printf("\033[32;1m");
-	printf("%s\033[0m", fileName);
+	if(strlen(fileName)) printf("%s\033[0m", fileName);
+	else printf("%s\033[0m", 1+strrchr(dirName, (int)'/'));
 	return 0;
 }
 
@@ -86,7 +87,7 @@ int displayFile(char *fileName, int l, int a){
 			return 1;
 		}
 	}
-	int error = printFileName(".", fileName);
+	int error = printFileName(fileName, "");
 	if(error) return 1;
 	printf("\n");
 	return 0;
