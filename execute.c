@@ -44,7 +44,7 @@ int runCommandinBackground(char **arguments) {
 		if(WIFEXITED(status)){
 			int es = WEXITSTATUS(status);
 			printf("%s with pid %d exited with status %d\n", arguments[0], pid, es);
-			return 0;
+			exit(0);
 		}
 	}
 }
