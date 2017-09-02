@@ -64,3 +64,7 @@ int showPrompt() {
 		return 1;	
 	} 
 }
+
+void closePrompt(){
+	free(username);
+}

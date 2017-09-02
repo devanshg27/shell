@@ -40,7 +40,7 @@ int runCommandinBackground(char **arguments) {
 
 		if(waitpid(pid, &status, 0) == -1){
 			fprintf(stderr, "waitpid failed\n");
-			return 1;
+			exit(0);
 		}
 		if(WIFEXITED(status)){
 			int es = WEXITSTATUS(status);
@@ -48,6 +48,7 @@ int runCommandinBackground(char **arguments) {
 			exit(0);
 		}
 	}
+	return 0;
 }
 
 struct builtins{
@@ -90,21 +91,23 @@ int runCommand(char *command){
 		pid_t pid = fork();
 		if(pid == -1){
 			perror("Fork Error");
+			free(arguments);
 			return 1;
 		}
-		else if(pid==0){
+		else if(pid == 0){
 			int numberOfImplementedBuiltins = sizeof(implementedBuiltins)/sizeof(implementedBuiltins[0]);
 			for(int i=0; i<numberOfImplementedBuiltins; ++i){
 				if(strcmp(arguments[0], implementedBuiltins[i].command) == 0){
 					int val = (implementedBuiltins[i].commandFunction)(arguments, position, home_directory);
 					printf("%s with pid %d exited with status %d\n", arguments[0], (int) getpid(), val);
 					exit(0);
-					return val;
 				}
 			}
-			int val = runCommandinBackground(arguments);
+			runCommandinBackground(arguments);
 			exit(0);
-			if(val) return 1;
+		}
+		else{
+			free(arguments);
 		}
 	}
 	else{
@@ -112,21 +115,25 @@ int runCommand(char *command){
 		for(int i=0; i<numberOfImplementedBuiltins; ++i){
 			if(strcmp(arguments[0], implementedBuiltins[i].command) == 0){
 				int val = (implementedBuiltins[i].commandFunction)(arguments, position, home_directory);
+				free(arguments);
 				return val;
 			}
 		}
 		pid_t pid = fork();
 		if(pid == -1){
 			perror("Fork Error");
+			free(arguments);
 			return 1;
 		}
-		else if(pid==0){
+		else if(pid == 0){
 			execvp(arguments[0], arguments);
 			perror("Execvp Error");
 			exit(0);
 		}
 		else{
-			int val = wait(NULL);
+			int status = 0;
+			int val = waitpid(pid, &status, WUNTRACED);
+			free(arguments);
 			if(val == -1){
 				fprintf(stderr, "Wait Error\n");
 				return 1;

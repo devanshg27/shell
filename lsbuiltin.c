@@ -194,12 +194,6 @@ int listData(char *argument, int L, int A, char *home_directory) {
 int ls(char **arguments, int count, char *home_directory){
 	int A = 0, L = 0, idx = 1;
 
-	char *location = malloc(sizeof(char) * PATH_MAX);
-	if((location) == NULL){
-		perror("Malloc Failed");
-		return 1;
-	}
-
 	while(arguments[idx] != NULL){
 		if(arguments[idx][0] == '-' && strlen(arguments[idx]) > 1){
 			for(int j=1; j<strlen(arguments[idx]); ++j){
@@ -250,13 +244,9 @@ int ls(char **arguments, int count, char *home_directory){
 
 	if(yes == 0){
 
-		char *current = malloc(sizeof(char) * 2);
-		if(current == NULL){
-			perror("Malloc Failed");
-			return 1;
-		}
-
-		current = ".";
+		char current[2];
+		current[0] = '.';
+		current[1] = '\0';
 
 		int val = checkFile(current);
 		if(val == -1) return 1;

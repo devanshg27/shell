@@ -5,12 +5,12 @@
 #include <tokenize.h>
 #include <errno.h>
 
-char **fetchCommands(){
+void fetchCommands(char **inp, char ***commands){
 	int BUFFER_SIZE = BLOCK_SIZE, position = 0;
 	char c = 0;
 
-	char *inp = malloc(sizeof(char) * BUFFER_SIZE);
-	if(inp == NULL){
+	*inp = malloc(sizeof(char) * BUFFER_SIZE);
+	if((*inp) == NULL){
 		perror("Malloc Failed");
 		exit(0);
 	}
@@ -24,25 +24,25 @@ char **fetchCommands(){
 		else{
 			if(position == BUFFER_SIZE){
 				BUFFER_SIZE += BLOCK_SIZE;
-				inp = realloc(inp, BUFFER_SIZE);
-				if(inp == NULL){
+				(*inp) = realloc((*inp), BUFFER_SIZE);
+				if((*inp) == NULL){
 					perror("Realloc Error");
 					exit(0);
 				}
 			}
-			inp[position] = c;
+			(*inp)[position] = c;
 			++position;
 		}
 	}
 	if(position == BUFFER_SIZE){
 		++BUFFER_SIZE;
-		inp = realloc(inp, BUFFER_SIZE);
-		if(inp == NULL){
+		(*inp) = realloc((*inp), BUFFER_SIZE);
+		if((*inp) == NULL){
 			perror("Realloc Error");
 			exit(0);
 		} 
 	}
-	inp[position] = '\0';
+	(*inp)[position] = '\0';
 	
-	return tokenizeCommands(inp);
+	tokenizeCommands((*inp), (commands));
 }

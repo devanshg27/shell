@@ -21,14 +21,19 @@ int main(){
 			perror("Error in Flushing Output");
 			continue;
 		}
-		char **commands = fetchCommands();
+		char *inputMemory = NULL;
+		char **commands = NULL;
+		fetchCommands(&inputMemory, &commands);
 		int position = 0;
 		while(1){
 			if(commands[position] == NULL) break;
-			int val = runCommand(commands[position]);
+			runCommand(commands[position]);
 			++position;
 		}
+		if(commands) free(commands);
+		if(inputMemory) free(inputMemory);
 	}
 
+	closePrompt();
 	return 0;
 }

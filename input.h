@@ -2,4 +2,4 @@
 	#define BLOCK_SIZE 100
 #endif
 
-char **fetchCommands();
+void fetchCommands(char **inp, char ***commands);

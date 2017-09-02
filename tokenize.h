@@ -2,4 +2,4 @@
 	#define BLOCK_SIZE 100
 #endif
 
-char **tokenizeCommands(char *input);
+void tokenizeCommands(char *input, char ***tokens);

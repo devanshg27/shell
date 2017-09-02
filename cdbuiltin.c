@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
+#include <linux/limits.h>
 
 int cd(char **arguments, int count, char *home_directory){
 	if(count > 2){
@@ -11,18 +12,26 @@ int cd(char **arguments, int count, char *home_directory){
 		return 1;
 	} 
 	else{
-		char *destinationDirectory;
-		if(count == 1) destinationDirectory = home_directory;
-		else destinationDirectory = arguments[1];
-		if(count > 1 && strcmp(arguments[1], "~") == 0) {
-			destinationDirectory = home_directory;
-		}
-		else if(count > 1 && arguments[1][0] == '~' && arguments[1][1] == '/') {
-			destinationDirectory = malloc(strlen(home_directory) + strlen(arguments[1]));
-			if(destinationDirectory == NULL) {
-				perror("Malloc Failed");
+		char destinationDirectory[PATH_MAX + 1];
+		if(count == 1){
+			if(strcpy(destinationDirectory, home_directory) == NULL) {
+				fprintf(stderr, "Strcpy Error\n");
 				return 1;
 			}
+		}
+		else{
+			if(strcpy(destinationDirectory, arguments[1]) == NULL) {
+				fprintf(stderr, "Strcpy Error\n");
+				return 1;
+			}
+		}
+		if(count > 1 && strcmp(arguments[1], "~") == 0) {
+			if(strcpy(destinationDirectory, home_directory) == NULL) {
+				fprintf(stderr, "Strcpy Error\n");
+				return 1;
+			}
+		}
+		else if(count > 1 && arguments[1][0] == '~' && arguments[1][1] == '/') {
 			if(strcpy(destinationDirectory, home_directory) == NULL) {
 				fprintf(stderr, "Strcpy Error\n");
 				return 1;

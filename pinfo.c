@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <linux/limits.h>
 
 int pinfo(char **arguments, int count, char *home_directory){
 	int pid = 0;
@@ -49,7 +50,7 @@ int pinfo(char **arguments, int count, char *home_directory){
 	FILE* fp = fopen(PID, "r");
 
 	if(fp != NULL){
-		char *b = malloc(sizeof(char) * 4096);
+		char  b[PATH_MAX + 1];
 		fscanf(fp, " %4096s", b);
 		fscanf(fp, " %4096s", b);
 		fscanf(fp, " %4096s", b);

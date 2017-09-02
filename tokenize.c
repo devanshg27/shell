@@ -6,10 +6,10 @@
 #include <string.h>
 #include <errno.h>
 
-char **tokenizeCommands(char *input){
+void tokenizeCommands(char *input, char ***tokens){
 	int BUFFER_SIZE = BLOCK_SIZE, position = 0;
-	char **tokens = malloc(sizeof(char*) * BUFFER_SIZE);
-	if(tokens == NULL){
+	*tokens = malloc(sizeof(char*) * BUFFER_SIZE);
+	if((*tokens) == NULL){
 		perror("Malloc Failed");
 		exit(0);
 	}
@@ -18,18 +18,17 @@ char **tokenizeCommands(char *input){
 
 	token = strtok(input, ";");
 	while(token != NULL){
-		tokens[position] = token;
+		(*tokens)[position] = token;
 		++position;
 		if(position == BUFFER_SIZE){
 			BUFFER_SIZE += BLOCK_SIZE;
-			tokens = realloc(tokens, BUFFER_SIZE * sizeof(char*));
-			if(tokens == NULL){
+			(*tokens) = realloc((*tokens), BUFFER_SIZE * sizeof(char*));
+			if((*tokens) == NULL){
 				perror("Realloc Failed");
 				exit(0);
 			}
 		}
 		token = strtok(NULL, ";");
 	}
-	tokens[position] = NULL;
-	return tokens;
+	(*tokens)[position] = NULL;
 }
