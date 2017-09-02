@@ -32,7 +32,7 @@ int runCommandinBackground(char **arguments) {
 	else if(pid==0){
 		execvp(arguments[0], arguments);
 		perror("Execvp Error");
-		return 1;
+		exit(0);
 	}
 	else{
 
@@ -84,15 +84,7 @@ int runCommand(char *command){
 
 	arguments[position] = NULL;
 
-	int numberOfImplementedBuiltins = sizeof(implementedBuiltins)/sizeof(implementedBuiltins[0]);
-	for(int i=0; i<numberOfImplementedBuiltins; ++i){
-		if(strcmp(arguments[0], implementedBuiltins[i].command) == 0){
-			int val = (implementedBuiltins[i].commandFunction)(arguments, position, home_directory);
-			return val;
-		}
-	}
-
-	if(strcmp(arguments[position-1], "&") == 0) {
+	if(position > 1 && strcmp(arguments[position-1], "&") == 0) {
 		--position;
 		arguments[position] = NULL;
 		pid_t pid = fork();
@@ -101,11 +93,28 @@ int runCommand(char *command){
 			return 1;
 		}
 		else if(pid==0){
+			int numberOfImplementedBuiltins = sizeof(implementedBuiltins)/sizeof(implementedBuiltins[0]);
+			for(int i=0; i<numberOfImplementedBuiltins; ++i){
+				if(strcmp(arguments[0], implementedBuiltins[i].command) == 0){
+					int val = (implementedBuiltins[i].commandFunction)(arguments, position, home_directory);
+					printf("%s with pid %d exited with status %d\n", arguments[0], (int) getpid(), val);
+					exit(0);
+					return val;
+				}
+			}
 			int val = runCommandinBackground(arguments);
+			exit(0);
 			if(val) return 1;
 		}
 	}
 	else{
+		int numberOfImplementedBuiltins = sizeof(implementedBuiltins)/sizeof(implementedBuiltins[0]);
+		for(int i=0; i<numberOfImplementedBuiltins; ++i){
+			if(strcmp(arguments[0], implementedBuiltins[i].command) == 0){
+				int val = (implementedBuiltins[i].commandFunction)(arguments, position, home_directory);
+				return val;
+			}
+		}
 		pid_t pid = fork();
 		if(pid == -1){
 			perror("Fork Error");
@@ -114,7 +123,7 @@ int runCommand(char *command){
 		else if(pid==0){
 			execvp(arguments[0], arguments);
 			perror("Execvp Error");
-			return 1;
+			exit(0);
 		}
 		else{
 			int val = wait(NULL);

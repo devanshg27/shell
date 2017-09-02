@@ -8,6 +8,7 @@
 
 void init(){
 	initPrompt();
+	initExecute();
 }
 
 int main(){
