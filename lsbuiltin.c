@@ -44,6 +44,7 @@ int printFileName(char *dirName, char *fileName){
 	else if(S_ISBLK(data.st_mode)) printf("\033[40;33;1m");
 	else if(data.st_mode & S_IXUSR) printf("\033[32;1m");
 	if(strlen(fileName)) printf("%s\033[0m", fileName);
+	else if(strstr(dirName, "/") == NULL) printf("%s\033[0m", dirName);
 	else printf("%s\033[0m", 1+strrchr(dirName, (int)'/'));
 	return 0;
 }
