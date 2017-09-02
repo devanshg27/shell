@@ -6,7 +6,7 @@ OBJ = prompt.o shell.o input.o tokenize.o execute.o cdbuiltin.o pwdbuiltin.o ech
 %.o: %.c $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
-a.out: $(OBJ)
+shell: $(OBJ)
 	$(CC) -o $@ $^ $(CFLAGS)
 
 .PHONY: clean
