@@ -18,7 +18,7 @@ void initPrompt() {
 
 	username = malloc(strlen(usernamePointer) + 1);
 	if(username == NULL){
-		perror("Malloc Failed\n");
+		perror("Malloc Failed");
 		exit(0);
 	}
 
@@ -34,8 +34,7 @@ void initPrompt() {
 		}
 	}
 	else{
-		perror("Strcpy Error");
-		exit(0);
+		fprintf(stderr, "Strcpy Error\n");
 	}
 
 }
@@ -61,7 +60,7 @@ int showPrompt() {
 		return 0;
 	}
 	else{
-		perror("getcwd() error");
+		perror("Getcwd error");
 		return 1;	
 	} 
 }

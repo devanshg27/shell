@@ -3,10 +3,11 @@
 #include <linux/limits.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <errno.h>
 
 int pwd(char **arguments, int count, char *home_directory){
 	if(count > 1){
-		perror("Error: Invalid Usage\n");	
+		fprintf(stderr, "Error: Invalid Usage\n");
 		return 1;
 	} 
 	char present_directory[PATH_MAX + 1];

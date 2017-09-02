@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <tokenize.h>
+#include <errno.h>
 
 char **fetchCommands(){
 	int BUFFER_SIZE = BLOCK_SIZE, position = 0;
@@ -10,7 +11,7 @@ char **fetchCommands(){
 
 	char *inp = malloc(sizeof(char) * BUFFER_SIZE);
 	if(inp == NULL){
-		perror("Malloc Failed\n");
+		perror("Malloc Failed");
 		exit(0);
 	}
 

@@ -12,6 +12,7 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <time.h>
+#include <errno.h>
 
 int checkFile(char *fileName){
 	struct stat data;
@@ -104,17 +105,17 @@ int listFileInfo(char *directoryName, char *fileName){
 				display(data);
 			}
 			else{
-				perror("Strcat Error");
+				fprintf(stderr, "Strcat Error\n");
 				return 1;
 			}
 		}
 		else{
-			perror("Strcat Error");
+			fprintf(stderr, "Strcat Error\n");
 			return 1;
 		}
 	}
 	else{
-		perror("Strcpy Error");
+		fprintf(stderr, "Strcpy Error\n");
 		return 1;
 	}
 	return 0;
@@ -159,22 +160,22 @@ int show(char *x, int l, int a){
 int listData(char *argument, int L, int A, char *home_directory) {
 	char path[PATH_MAX + 1];
 	if(strcpy(path, argument) == NULL) {
-		perror("Strcpy Error");
+		fprintf(stderr, "Strcpy Error\n");
 		return 1;
 	}
 	if(strcmp(argument, "~") == 0) {
 		if(strcpy(path, home_directory) == NULL) {
-			perror("Strcpy Error");
+			fprintf(stderr, "Strcpy Error\n");
 			return 1;
 		}
 	}
 	else if(argument[0] == '~' && argument[1] == '/') {
 		if(strcpy(path, home_directory) == NULL) {
-			perror("Strcpy Error");
+			fprintf(stderr, "Strcpy Error\n");
 			return 1;
 		}
 		if(strcat(path, &argument[1]) == NULL) {
-			perror("Strcat Error");
+			fprintf(stderr, "Strcat Error\n");
 			return 1;
 		}
 	}
@@ -205,7 +206,7 @@ int ls(char **arguments, int count, char *home_directory){
 				if(arguments[idx][j] == 'a') A = 1;
 				else if(arguments[idx][j] == 'l') L = 1;
 				else{
-					perror("Invalid Flag");
+					fprintf(stderr, "Invalid Flag\n");
 					return 1;
 				}
 			}

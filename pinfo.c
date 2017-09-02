@@ -4,6 +4,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <errno.h>
 
 int pinfo(char **arguments, int count, char *home_directory){
 	int pid = 0;
@@ -15,10 +16,9 @@ int pinfo(char **arguments, int count, char *home_directory){
 		}
 	}
 	else{
-		perror("Usage Error");
+		fprintf(stderr, "Usage Error\n");
 		return 1;
 	} 
-	printf("pid -- %d\n", pid);
 
 	char PID[100];
 	PID[0] = '/'; PID[1] = 'p'; PID[2] = 'r'; PID[3] = 'o'; PID[4] = 'c'; PID[5] = '/';
@@ -53,6 +53,7 @@ int pinfo(char **arguments, int count, char *home_directory){
 		fscanf(fp, " %4096s", b);
 		fscanf(fp, " %4096s", b);
 		fscanf(fp, " %4096s", b);
+		printf("pid -- %d\n", pid);
 		printf("Process Status -- %s\n", b);
 
 		for(int i=0; i<20; ++i) fscanf(fp, " %4096s", b);
@@ -66,7 +67,7 @@ int pinfo(char **arguments, int count, char *home_directory){
 	}
 
 	if(val == -1){
-		perror("Readlink Error");
+		fprintf(stderr, "Readlink Error\n");
 		return 1;
 	}
 	else printf("Executable path -- %s\n", link);

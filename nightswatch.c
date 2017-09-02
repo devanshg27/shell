@@ -9,6 +9,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <time.h>
+#include <errno.h>
 
 /* Initialize new terminal i/o settings */
 static struct termios old, new1;
@@ -96,16 +97,16 @@ struct nightswatchCommands{
 int nightswatch(char **arguments, int count, char *home_directory){
 	double timeInterval;
 	if(count != 4){
-		perror("Error\n");
+		fprintf(stderr, "Error: Invalid Usage\n");
 		return 1;
 	}
 	if(strcmp(arguments[1], "-n") != 0){
-		perror("Error\n");
+		fprintf(stderr, "Error: Invalid Usage\n");
 		return 1;
 	}
 	timeInterval = atof(arguments[2]);
 	if(timeInterval <= 0.0){
-		perror("Error\n");
+		fprintf(stderr, "Error: Invalid Usage\n");
 		return 1;
 	}
 	int lenNightswatchCommands = sizeof(nightswatchCommandsList)/sizeof(nightswatchCommandsList[0]);
@@ -135,6 +136,6 @@ int nightswatch(char **arguments, int count, char *home_directory){
 			}
 		}
 	}
-	perror("Error\n");
+	fprintf(stderr, "Error: Invalid Command\n");
 	return 1;
 }

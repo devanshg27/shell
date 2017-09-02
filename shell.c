@@ -4,6 +4,7 @@
 #include <execute.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <errno.h>
 
 void init(){
 	initPrompt();
@@ -16,7 +17,7 @@ int main(){
 		if(error) continue;
 		int val = fflush(stdout);
 		if(val != 0){
-			perror("Error in Flushing Output\n");
+			perror("Error in Flushing Output");
 			continue;
 		}
 		char **commands = fetchCommands();
@@ -24,7 +25,6 @@ int main(){
 		while(1){
 			if(commands[position] == NULL) break;
 			int val = runCommand(commands[position]);
-			if(val == 1) break;
 			++position;
 		}
 	}

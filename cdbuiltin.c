@@ -3,11 +3,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <errno.h>
 
 int cd(char **arguments, int count, char *home_directory){
 	if(count > 2){
-		perror("Error: Invalid Usage\n");
-		return 1;	
+		fprintf(stderr, "Error: Invalid Usage\n");
+		return 1;
 	} 
 	else{
 		char *destinationDirectory;
@@ -23,11 +24,11 @@ int cd(char **arguments, int count, char *home_directory){
 				return 1;
 			}
 			if(strcpy(destinationDirectory, home_directory) == NULL) {
-				perror("Strcpy Error");
+				fprintf(stderr, "Strcpy Error\n");
 				return 1;
 			}
 			if(strcat(destinationDirectory, &arguments[1][1]) == NULL) {
-				perror("Strcat Error");
+				fprintf(stderr, "Strcat Error\n");
 				return 1;
 			}
 		}

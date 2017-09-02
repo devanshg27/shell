@@ -4,12 +4,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
 char **tokenizeCommands(char *input){
 	int BUFFER_SIZE = BLOCK_SIZE, position = 0;
 	char **tokens = malloc(sizeof(char*) * BUFFER_SIZE);
 	if(tokens == NULL){
-		perror("Malloc Failed\n");
+		perror("Malloc Failed");
 		exit(0);
 	}
 
@@ -23,7 +24,7 @@ char **tokenizeCommands(char *input){
 			BUFFER_SIZE += BLOCK_SIZE;
 			tokens = realloc(tokens, BUFFER_SIZE * sizeof(char*));
 			if(tokens == NULL){
-				perror("Realloc Failed\n");
+				perror("Realloc Failed");
 				exit(0);
 			}
 		}

@@ -12,6 +12,7 @@
 #include <lsbuiltin.h>
 #include <nightswatch.h>
 #include <pinfo.h>
+#include <errno.h>
 
 char home_directory[PATH_MAX + 1];
 
@@ -38,7 +39,7 @@ int runCommandinBackground(char **arguments) {
 		int status;
 
 		if(waitpid(pid, &status, 0) == -1){
-			perror("waitpid() failed");
+			fprintf(stderr, "waitpid failed\n");
 			return 1;
 		}
 		if(WIFEXITED(status)){
@@ -118,7 +119,7 @@ int runCommand(char *command){
 		else{
 			int val = wait(NULL);
 			if(val == -1){
-				perror("Wait Error");
+				fprintf(stderr, "Wait Error\n");
 				return 1;
 			}
 		}
