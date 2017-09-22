@@ -17,8 +17,7 @@ void fetchCommands(char **inp, char ***commands){
 
 	while(1){
 		if(scanf("%c", &c) == EOF){
-			puts("");
-			exit(0);
+			continue;
 		}
 		else if(c == '\n') break;
 		else{

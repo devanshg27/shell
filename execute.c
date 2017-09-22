@@ -23,122 +23,170 @@ void initExecute(){
 	}
 }
 
-int runCommandinBackground(char **arguments) {
-	pid_t pid = fork();
-	if(pid == -1){
-		perror("Fork Error");
-		return 1;
-	}
-	else if(pid==0){
-		execvp(arguments[0], arguments);
-		perror("Execvp Error");
-		exit(0);
-	}
-	else{
-
-		int status;
-
-		if(waitpid(pid, &status, 0) == -1){
-			fprintf(stderr, "waitpid failed\n");
-			exit(0);
-		}
-		if(WIFEXITED(status)){
-			int es = WEXITSTATUS(status);
-			printf("%s with pid %d exited with status %d\n", arguments[0], pid, es);
-			exit(0);
-		}
-	}
-	return 0;
-}
+typedef struct {
+	char *inputFile;
+	char **arguments;
+	char *outputFile;
+} commandObject;
 
 struct builtins{
 	char *command;
 	int (*commandFunction)(char **arguments, int count, char *home_directory);
 } implementedBuiltins[] = {{"cd", cd}, {"pwd", pwd}, {"echo", echo}, {"ls", ls}, {"nightswatch", nightswatch}, {"pinfo", pinfo}};
 
-int runCommand(char *command){
+int convertTilde(char *dest, char *argument) {
+	if(strcpy(dest, argument) == NULL) {
+		fprintf(stderr, "Strcpy Error\n");
+		return 1;
+	}
+	if(strcmp(argument, "~") == 0) {
+		if(strcpy(dest, home_directory) == NULL) {
+			fprintf(stderr, "Strcpy Error\n");
+			return 1;
+		}
+	}
+	else if(argument[0] == '~' && argument[1] == '/') {
+		if(strcpy(dest, home_directory) == NULL) {
+			fprintf(stderr, "Strcpy Error\n");
+			return 1;
+		}
+		if(strcat(dest, &argument[1]) == NULL) {
+			fprintf(stderr, "Strcat Error\n");
+			return 1;
+		}
+	}
+	return 0;
+}
 
-	int BUFFER_SIZE = 100, position = 0;
+int commandParser(char *command, commandObject** listCommands) {
+	int BUFFER_SIZE = BLOCK_SIZE, position = 0;
 
-	char **arguments = malloc(sizeof(char*) * BUFFER_SIZE);
-	if(arguments == NULL){
+	*listCommands = malloc(sizeof(commandObject) * BUFFER_SIZE);
+	if(*listCommands == NULL){
 		perror("Malloc Failed");
 		return 1;
 	}
 
 	char *argument;
 
-	argument = strtok(command, " \t");
+	argument = strtok(command, "|");
 	while(argument != NULL){
-		arguments[position] = argument;
+		(*listCommands)[position].inputFile = argument;
 		++position;
 		if(position == BUFFER_SIZE){
 			BUFFER_SIZE += BLOCK_SIZE;
-			arguments = realloc(arguments, BUFFER_SIZE * sizeof(char*));
-			if(arguments == NULL){
+			*listCommands = realloc(*listCommands, BUFFER_SIZE * sizeof(commandObject));
+			if(*listCommands == NULL){
 				perror("Realloc Error");
 				return 1;
 			}
 		}
-		argument = strtok(NULL, " \t");
+		argument = strtok(NULL, "|");
 	}
 
-	arguments[position] = NULL;
+	(*listCommands)[position].inputFile = NULL;
+	(*listCommands)[position].arguments = NULL;
+	(*listCommands)[position].outputFile = NULL;
 
-	if(position > 1 && strcmp(arguments[position-1], "&") == 0) {
-		--position;
-		arguments[position] = NULL;
-		pid_t pid = fork();
-		if(pid == -1){
-			perror("Fork Error");
-			free(arguments);
+	int positionArgument;
+	for (int i=0; i<position; ++i) {
+		positionArgument = 0;
+		BUFFER_SIZE = BLOCK_SIZE;
+		argument = (*listCommands)[i].inputFile;
+		(*listCommands)[i].inputFile = NULL;
+		(*listCommands)[i].outputFile = NULL;
+		(*listCommands)[i].arguments = malloc(BUFFER_SIZE * sizeof(char *));
+		if((*listCommands)[i].arguments == NULL){
+			perror("Malloc Failed");
 			return 1;
 		}
-		else if(pid == 0){
-			int numberOfImplementedBuiltins = sizeof(implementedBuiltins)/sizeof(implementedBuiltins[0]);
-			for(int i=0; i<numberOfImplementedBuiltins; ++i){
-				if(strcmp(arguments[0], implementedBuiltins[i].command) == 0){
-					int val = (implementedBuiltins[i].commandFunction)(arguments, position, home_directory);
-					printf("%s with pid %d exited with status %d\n", arguments[0], (int) getpid(), val);
-					exit(0);
+		char *pch = strtok(argument, " \t");
+		while(pch != NULL){
+			if(strcmp(pch, "<") == 0) {
+				pch = strtok(NULL, " \t");
+				if(pch) {
+					(*listCommands)[i].inputFile = pch;
+				}
+				else {
+					fprintf(stderr, "Syntax Error\n");
+					return 1;
 				}
 			}
-			runCommandinBackground(arguments);
-			exit(0);
-		}
-		else{
-			free(arguments);
-		}
-	}
-	else{
-		int numberOfImplementedBuiltins = sizeof(implementedBuiltins)/sizeof(implementedBuiltins[0]);
-		for(int i=0; i<numberOfImplementedBuiltins; ++i){
-			if(strcmp(arguments[0], implementedBuiltins[i].command) == 0){
-				int val = (implementedBuiltins[i].commandFunction)(arguments, position, home_directory);
-				free(arguments);
-				return val;
+			else if(strcmp(pch, ">") == 0) {
+				pch = strtok(NULL, " \t");
+				if(pch) {
+					(*listCommands)[i].outputFile = pch;
+				}
+				else {
+					fprintf(stderr, "Syntax Error\n");
+					return 1;
+				}
 			}
+			else {
+				(*listCommands)[i].arguments[positionArgument] = pch;
+				++positionArgument;
+				if(positionArgument == BUFFER_SIZE){
+					BUFFER_SIZE += BLOCK_SIZE;
+					(*listCommands)[i].arguments = realloc((*listCommands)[i].arguments, BUFFER_SIZE * sizeof(char *));
+					if(*listCommands == NULL){
+						perror("Realloc Error");
+						return 1;
+					}
+				}
+			}
+			pch = strtok(NULL, " \t");
 		}
-		pid_t pid = fork();
-		if(pid == -1){
-			perror("Fork Error");
-			free(arguments);
-			return 1;
-		}
-		else if(pid == 0){
-			execvp(arguments[0], arguments);
-			perror("Execvp Error");
-			exit(0);
-		}
-		else{
-			int status = 0;
-			int val = waitpid(pid, &status, WUNTRACED);
-			free(arguments);
-			if(val == -1){
-				fprintf(stderr, "Wait Error\n");
+		(*listCommands)[i].arguments[positionArgument] = NULL;
+		for (int j = 0; j<positionArgument; ++j) {
+			argument = (*listCommands)[i].arguments[j];
+			(*listCommands)[i].arguments[j] = malloc(sizeof(char) * (strlen(argument) > PATH_MAX ? strlen(argument) : PATH_MAX));
+			if((*listCommands)[i].arguments[j] == NULL) {
+				perror("Malloc Failed");
 				return 1;
 			}
+			if(convertTilde((*listCommands)[i].arguments[j], argument)) return 1;
+		}
+		argument = (*listCommands)[i].inputFile;
+		(*listCommands)[i].inputFile = malloc(sizeof(char) * PATH_MAX);
+		if(convertTilde((*listCommands)[i].inputFile, argument)) return 1;
+		argument = (*listCommands)[i].outputFile;
+		(*listCommands)[i].outputFile = malloc(sizeof(char) * PATH_MAX);
+		if(convertTilde((*listCommands)[i].outputFile, argument)) return 1;
+	}
+	return 0;
+}
+
+int runCommand(char *command){
+	int commandLength = strlen(command);
+	int isBackground = 0;
+	if(commandLength > 1 && command[commandLength-1] == '&') {
+		command[commandLength-1] = '\0';
+		isBackground = 1;
+		--commandLength;
+	}
+	commandObject *listCommands;
+	if(commandParser(command, &listCommands)) return 1;
+	for(int i=0; listCommands[i].arguments!=NULL; ++i) {
+		printf("Command ");
+		if(listCommands[i].inputFile) {
+			printf("< %s ", listCommands[i].inputFile);
+		}
+		if(listCommands[i].outputFile) {
+			printf("> %s ", listCommands[i].outputFile);
+		}
+		puts("");
+		for (int j = 0; listCommands[i].arguments[j]!=NULL; ++j) {
+			printf("\t%s\n", listCommands[i].arguments[j]);
 		}
 	}
+	for(int i=0; listCommands[i].arguments!=NULL; ++i) {
+		for (int j = 0; listCommands[i].arguments[j]!=NULL; ++j) {
+			free(listCommands[i].arguments[j]);
+		}
+		free(listCommands[i].inputFile);
+		free(listCommands[i].arguments);
+		free(listCommands[i].outputFile);
+	}
+	free(listCommands);
 	return 0;
 }
