@@ -146,12 +146,16 @@ int commandParser(char *command, commandObject** listCommands) {
 			}
 			if(convertTilde((*listCommands)[i].arguments[j], argument)) return 1;
 		}
-		argument = (*listCommands)[i].inputFile;
-		(*listCommands)[i].inputFile = malloc(sizeof(char) * PATH_MAX);
-		if(convertTilde((*listCommands)[i].inputFile, argument)) return 1;
-		argument = (*listCommands)[i].outputFile;
-		(*listCommands)[i].outputFile = malloc(sizeof(char) * PATH_MAX);
-		if(convertTilde((*listCommands)[i].outputFile, argument)) return 1;
+		if((*listCommands)[i].inputFile) {
+			argument = (*listCommands)[i].inputFile;
+			(*listCommands)[i].inputFile = malloc(sizeof(char) * PATH_MAX);
+			if(convertTilde((*listCommands)[i].inputFile, argument)) return 1;
+		}
+		if((*listCommands)[i].outputFile) {
+			argument = (*listCommands)[i].outputFile;
+			(*listCommands)[i].outputFile = malloc(sizeof(char) * PATH_MAX);
+			if(convertTilde((*listCommands)[i].outputFile, argument)) return 1;
+		}
 	}
 	return 0;
 }
@@ -183,9 +187,9 @@ int runCommand(char *command){
 		for (int j = 0; listCommands[i].arguments[j]!=NULL; ++j) {
 			free(listCommands[i].arguments[j]);
 		}
-		free(listCommands[i].inputFile);
+		if(listCommands[i].inputFile) free(listCommands[i].inputFile);
 		free(listCommands[i].arguments);
-		free(listCommands[i].outputFile);
+		if(listCommands[i].outputFile) free(listCommands[i].outputFile);
 	}
 	free(listCommands);
 	return 0;

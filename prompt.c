@@ -39,10 +39,10 @@ void initPrompt() {
 
 }
 
-int showPrompt() {
+int showPrompt(char **promptString) {
 	char current_directory[PATH_MAX + 1];
 	int isPrefix = 1;
-	
+	*promptString = malloc(sizeof(char) * (PATH_MAX + HOST_NAME_MAX + HOST_NAME_MAX + 2));
 	if(getcwd(current_directory, PATH_MAX + 1) != NULL){
 		for(int i=0; home_directory[i]!='\0'; i++) {
 			if(home_directory[i] != current_directory[i]) {
@@ -52,10 +52,10 @@ int showPrompt() {
 		}
 		printf("<\033[0;36m%s\033[0m@\033[0;32m%s\033[0m:\033[1;33m", username, system_name);
 		if(isPrefix) {
-			printf("~%s\033[0m> ", &current_directory[strlen(home_directory)]);
+			sprintf(*promptString, "~%s\033[0m> ", &current_directory[strlen(home_directory)]);
 		}
 		else {
-			printf("%s\033[0m> ", current_directory);
+			sprintf(*promptString, "%s\033[0m> ", current_directory);
 		}
 		return 0;
 	}
@@ -68,3 +68,4 @@ int showPrompt() {
 void closePrompt(){
 	free(username);
 }
+ 

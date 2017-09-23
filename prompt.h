@@ -1,3 +1,3 @@
 void initPrompt();
-int showPrompt();
+int showPrompt(char **promptString);
 void closePrompt();

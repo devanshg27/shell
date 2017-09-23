@@ -14,7 +14,8 @@ void init(){
 int main(){
 	init();
 	while(1){
-		int error = showPrompt();
+		char *promptMemory = NULL;
+		int error = showPrompt(&promptMemory);
 		if(error) continue;
 		int val = fflush(stdout);
 		if(val != 0){
@@ -23,13 +24,19 @@ int main(){
 		}
 		char *inputMemory = NULL;
 		char **commands = NULL;
-		fetchCommands(&inputMemory, &commands);
+		fetchCommands(promptMemory, &inputMemory, &commands);
 		int position = 0;
-		while(1){
-			if(commands[position] == NULL) break;
-			runCommand(commands[position]);
-			++position;
+		if(commands == NULL) {
+			puts("");
 		}
+		else {
+			while(1){
+				if(commands[position] == NULL) break;
+				runCommand(commands[position]);
+				++position;
+			}
+		}
+		if(promptMemory) free(promptMemory);
 		if(commands) free(commands);
 		if(inputMemory) free(inputMemory);
 	}
