@@ -5,10 +5,12 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <jobcontrol.h>
 
 void init(){
 	initPrompt();
 	initExecute();
+	initJobControl();
 }
 
 int main(){

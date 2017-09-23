@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=-g -lreadline -I. -Wall
-DEPS = prompt.h input.h tokenize.h execute.h cdbuiltin.h pwdbuiltin.h echobuiltin.h lsbuiltin.h nightswatch.h pinfo.h
-OBJ = prompt.o shell.o input.o tokenize.o execute.o cdbuiltin.o pwdbuiltin.o echobuiltin.o lsbuiltin.o nightswatch.o pinfo.o
+DEPS = prompt.h input.h tokenize.h execute.h cdbuiltin.h pwdbuiltin.h echobuiltin.h lsbuiltin.h nightswatch.h pinfo.h jobcontrol.h
+OBJ = prompt.o shell.o input.o tokenize.o execute.o cdbuiltin.o pwdbuiltin.o echobuiltin.o lsbuiltin.o nightswatch.o pinfo.o jobcontrol.o
 
 %.o: %.c $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)

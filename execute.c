@@ -11,6 +11,7 @@
 #include <echobuiltin.h>
 #include <lsbuiltin.h>
 #include <nightswatch.h>
+#include <jobcontrol.h>
 #include <pinfo.h>
 #include <errno.h>
 
@@ -32,7 +33,19 @@ typedef struct {
 struct builtins{
 	char *command;
 	int (*commandFunction)(char **arguments, int count, char *home_directory);
-} implementedBuiltins[] = {{"cd", cd}, {"pwd", pwd}, {"echo", echo}, {"ls", ls}, {"nightswatch", nightswatch}, {"pinfo", pinfo}};
+} implementedBuiltins[] = {
+	{"cd", cd},
+	{"pwd", pwd},
+	{"echo", echo},
+	{"ls", ls},
+	{"nightswatch", nightswatch},
+	{"pinfo", pinfo},
+	{"jobs", printJobs},
+	{"setenv", setenvbuiltin},
+	{"getenv", getenvbuiltin},
+	{"unsetenv", unsetenvbuiltin},
+	{"overkill", overkill}
+};
 
 int convertTilde(char *dest, char *argument) {
 	if(strcpy(dest, argument) == NULL) {
@@ -171,18 +184,39 @@ int runCommand(char *command){
 	commandObject *listCommands;
 	if(commandParser(command, &listCommands)) return 1;
 	for(int i=0; listCommands[i].arguments!=NULL; ++i) {
-		printf("Command ");
-		if(listCommands[i].inputFile) {
-			printf("< %s ", listCommands[i].inputFile);
+		// printf("Command ");
+		// if(listCommands[i].inputFile) {
+		// 	printf("< %s ", listCommands[i].inputFile);
+		// }
+		// if(listCommands[i].outputFile) {
+		// 	printf("> %s ", listCommands[i].outputFile);
+		// }
+		// puts("");
+		// for (int j = 0; listCommands[i].arguments[j]!=NULL; ++j) {
+		// 	printf("\t%s\n", listCommands[i].arguments[j]);
+		// }
+
+		int numberOfImplementedBuiltins = sizeof(implementedBuiltins)/sizeof(implementedBuiltins[0]);
+		for(int j=0; j<numberOfImplementedBuiltins; ++j){
+			if(strcmp(listCommands[i].arguments[0], implementedBuiltins[j].command) == 0){
+				int countArguments = 0;
+				while(listCommands[i].arguments[countArguments]) ++countArguments;
+				int val = (implementedBuiltins[j].commandFunction)(listCommands[i].arguments, countArguments, home_directory);
+				return val;
+			}
 		}
-		if(listCommands[i].outputFile) {
-			printf("> %s ", listCommands[i].outputFile);
+
+		pid_t PID = fork();
+
+		if(PID == 0){
+			setpgid(0, 0);
+			execvp(listCommands[i].arguments[0], listCommands[i].arguments);
 		}
-		puts("");
-		for (int j = 0; listCommands[i].arguments[j]!=NULL; ++j) {
-			printf("\t%s\n", listCommands[i].arguments[j]);
+		else{
+			addToBackground(PID, listCommands[i].arguments[0]);
 		}
 	}
+
 	for(int i=0; listCommands[i].arguments!=NULL; ++i) {
 		for (int j = 0; listCommands[i].arguments[j]!=NULL; ++j) {
 			free(listCommands[i].arguments[j]);
