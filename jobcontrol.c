@@ -28,35 +28,37 @@ backgroundCommands* startProcess = NULL;
 void childEndHandler(int sig){
 	pid_t pid;
 	int status;
-	pid = wait(&status);
 
-	backgroundCommands *iterator = startProcess, *prev = NULL;
-
-	while(iterator) {
-		if(iterator->processId == pid) {
-			if(prev){
-				prev->nextCommand = iterator->nextCommand;
-			}
-			else{
-				startProcess = iterator->nextCommand;
-			}
-			break;
-		}
-		prev = iterator;
-		iterator = iterator->nextCommand;
-	}
+	while((pid = waitpid(-1, &status, WNOHANG)) != -1){
 	
-	if(WIFEXITED(status)){
-		int es = WEXITSTATUS(status);
+		backgroundCommands *iterator = startProcess, *prev = NULL;
 
-		printf("%s with pid %d exited with status %d\n", iterator->commandName, pid, es);
-	}
-	else{
-		printf("%s with pid %d terminated\n", iterator->commandName, pid);
-	}
+		while(iterator) {
+			if(iterator->processId == pid) {
+				if(prev){
+					prev->nextCommand = iterator->nextCommand;
+				}
+				else{
+					startProcess = iterator->nextCommand;
+				}
+				break;
+			}
+			prev = iterator;
+			iterator = iterator->nextCommand;
+		}
+		
+		if(WIFEXITED(status)){
+			int es = WEXITSTATUS(status);
 
-	free(iterator->commandName);
-	free(iterator);
+			printf("%s with pid %d exited with status %d\n", iterator->commandName, pid, es);
+		}
+		else{
+			printf("%s with pid %d terminated\n", iterator->commandName, pid);
+		}
+
+		free(iterator->commandName);
+		free(iterator);
+	}
 }
 
 void initJobControl() {

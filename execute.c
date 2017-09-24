@@ -207,16 +207,30 @@ int runCommand(char *command){
 			}
 		}
 
-		pid_t PID = fork();
+		if(isBackground){
+			pid_t PID = fork();
 
-		if(PID == 0){
-			setpgid(0, 0);
-			execvp(listCommands[i].arguments[0], listCommands[i].arguments);
-			perror("Execvp Error");
-			exit(0);
+			if(PID == 0){
+				setpgid(0, 0);
+				execvp(listCommands[i].arguments[0], listCommands[i].arguments);
+				perror("Execvp Error");
+				exit(0);
+			}
+			else{
+				addToBackground(PID, listCommands[i].arguments[0]);
+			}
 		}
 		else{
-			addToBackground(PID, listCommands[i].arguments[0]);
+			pid_t PID = fork();
+			if(PID == 0){
+				execvp(listCommands[i].arguments[0], listCommands[i].arguments);
+				perror("Execvp Error");
+				exit(0);
+			}	
+			else{
+				int status;
+				wait(NULL);
+			}
 		}
 	}
 
