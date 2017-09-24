@@ -41,10 +41,11 @@ struct builtins{
 	{"nightswatch", nightswatch},
 	{"pinfo", pinfo},
 	{"jobs", printJobs},
-	{"setenv", setenvbuiltin},
-	{"getenv", getenvbuiltin},
-	{"unsetenv", unsetenvbuiltin},
-	{"overkill", overkill}
+	{"setenv", setenvBuiltin},
+	{"getenv", getenvBuiltin},
+	{"unsetenv", unsetenvBuiltin},
+	{"overkill", overkill},
+	{"quit", quitBuiltin}
 };
 
 int convertTilde(char *dest, char *argument) {

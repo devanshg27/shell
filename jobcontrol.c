@@ -103,7 +103,7 @@ int printJobs(char **arguments, int count, char *home_directory){
 	return recursivePrintJob(startProcess);
 }
 
-int setenvbuiltin(char **arguments, int count, char *home_directory){
+int setenvBuiltin(char **arguments, int count, char *home_directory){
 	if(count == 2) setenv(arguments[1], "", 1);	
 	else if(count == 3) setenv(arguments[1], arguments[2], 1);
 	else {
@@ -113,7 +113,7 @@ int setenvbuiltin(char **arguments, int count, char *home_directory){
 	return 0;
 }
 
-int getenvbuiltin(char **arguments, int count, char *home_directory){
+int getenvBuiltin(char **arguments, int count, char *home_directory){
 	if(count != 2) {
 		perror("Getenv: Invalid Usage");
 		return 1;
@@ -122,7 +122,7 @@ int getenvbuiltin(char **arguments, int count, char *home_directory){
 	return 0;
 }
 
-int unsetenvbuiltin(char **arguments, int count, char *home_directory){
+int unsetenvBuiltin(char **arguments, int count, char *home_directory){
 	if(count == 2){
 		unsetenv(arguments[1]);
 	}
@@ -148,4 +148,9 @@ void addToBackground(pid_t PID, char* commandArgument) {
 	current->commandName = malloc(sizeof(char) * (1 + strlen(commandArgument)));
 	strcpy(current->commandName, commandArgument);
 	startProcess = current;
+}
+
+int quitBuiltin(char **arguments, int count, char *home_directory){
+	overkill(arguments, count, home_directory);
+	exit(0);
 }
