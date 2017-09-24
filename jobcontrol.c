@@ -250,6 +250,11 @@ int fgBuiltin(char **arguments, int count, char *home_directory){
 	backgroundCommands *iterator = startProcess, *prev = NULL;
 	while(iterator) {
 		if(iterator->position == atoi(arguments[1])){
+			int val = kill(iterator->processId, SIGCONT);
+			if(val == -1) {
+				perror("Kill error");
+				return 1;
+			}
 			if(prev){
 				prev->nextCommand = iterator->nextCommand;
 			}
