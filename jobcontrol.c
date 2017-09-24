@@ -24,13 +24,13 @@ typedef struct backgroundCommand {
 } backgroundCommands;
 
 backgroundCommands* startProcess = NULL;
+backgroundCommands* foreGroundCommand = NULL;
 
 void childEndHandler(int sig){
 	pid_t pid;
 	int status;
 
-	while((pid = waitpid(-1, &status, WNOHANG)) != -1){
-	
+	while((pid = waitpid(-1, &status, (WNOHANG | WUNTRACED))) > 0){
 		backgroundCommands *iterator = startProcess, *prev = NULL;
 
 		while(iterator) {
@@ -47,23 +47,57 @@ void childEndHandler(int sig){
 			iterator = iterator->nextCommand;
 		}
 		
-		if(WIFEXITED(status)){
-			int es = WEXITSTATUS(status);
-
-			printf("%s with pid %d exited with status %d\n", iterator->commandName, pid, es);
+		if(foreGroundCommand && foreGroundCommand->processId == pid) {
+			if(WIFEXITED(status)){
+			}
+			else if(WIFSTOPPED(status)) {
+				printf("%s with pid %d stopped\n", foreGroundCommand->commandName, pid);
+				addToBackground(foreGroundCommand->processId, foreGroundCommand->commandName);
+			}
+			else if(WIFSIGNALED(status)){
+				printf("%s with pid %d terminated\n", foreGroundCommand->commandName, pid);
+			}
+			free(foreGroundCommand->commandName);
+			free(foreGroundCommand);
+			foreGroundCommand = NULL;
 		}
 		else{
-			printf("%s with pid %d terminated\n", iterator->commandName, pid);
+			if(WIFEXITED(status)){
+				int es = WEXITSTATUS(status);
+
+				printf("%s with pid %d exited with status %d\n", iterator->commandName, pid, es);
+				free(iterator->commandName);
+				free(iterator);
+			}
+			else if(WIFSTOPPED(status)) {
+				printf("%s with pid %d stopped\n", iterator->commandName, pid);
+			}
+			else if(WIFSIGNALED(status)){
+				printf("%s with pid %d terminated\n", iterator->commandName, pid);
+				free(iterator->commandName);
+				free(iterator);
+			}
 		}
 
-		free(iterator->commandName);
-		free(iterator);
+	}
+}
+
+void sigintHandler(int sig) {
+	if(foreGroundCommand) {
+		kill(foreGroundCommand->processId, SIGINT);
+	}
+}
+
+void sigtstpHandler(int sig) {
+	if(foreGroundCommand) {
+		kill(foreGroundCommand->processId, SIGTSTP);
 	}
 }
 
 void initJobControl() {
 	signal(SIGCHLD, childEndHandler);
-	signal(SIGINT, SIG_IGN);
+	signal(SIGINT, sigintHandler);
+	signal(SIGTSTP, sigtstpHandler);
 }
 
 int recursivePrintJob(backgroundCommands* iterator) {
@@ -109,7 +143,7 @@ int setenvBuiltin(char **arguments, int count, char *home_directory){
 	if(count == 2) setenv(arguments[1], "", 1);	
 	else if(count == 3) setenv(arguments[1], arguments[2], 1);
 	else {
-		perror("Setenv: Invalid Usage\n");
+		fprintf(stderr, "Setenv: Invalid Usage\n");
 		return 1;
 	}
 	return 0;
@@ -117,7 +151,7 @@ int setenvBuiltin(char **arguments, int count, char *home_directory){
 
 int getenvBuiltin(char **arguments, int count, char *home_directory){
 	if(count != 2) {
-		perror("Getenv: Invalid Usage");
+		fprintf(stderr, "Getenv: Invalid Usage\n");
 		return 1;
 	}
 	else printf("%s\n", getenv(arguments[1]));
@@ -128,7 +162,7 @@ int unsetenvBuiltin(char **arguments, int count, char *home_directory){
 	if(count == 2){
 		unsetenv(arguments[1]);
 	}
-	else perror("Unsetenv: Invalid Usage");
+	else fprintf(stderr, "Unsetenv: Invalid Usage\n");
 	return 0;
 }
 
@@ -152,7 +186,88 @@ void addToBackground(pid_t PID, char* commandArgument) {
 	startProcess = current;
 }
 
+void addToForeground(pid_t PID, char* commandArgument) {
+	foreGroundCommand = malloc(sizeof(backgroundCommands));
+	foreGroundCommand->position = -1;
+	foreGroundCommand->nextCommand = NULL;
+	foreGroundCommand->processId = PID;
+	foreGroundCommand->commandName = malloc(sizeof(char) * (1 + strlen(commandArgument)));
+	strcpy(foreGroundCommand->commandName, commandArgument);
+}
+
 int quitBuiltin(char **arguments, int count, char *home_directory){
 	overkill(arguments, count, home_directory);
 	exit(0);
+}
+
+int kjob(char **arguments, int count, char *home_directory){
+	if(count != 3){
+		fprintf(stderr, "Error: Invalid Usage\n");
+		return 1;
+	}
+	backgroundCommands *iterator = startProcess;
+	while(iterator){
+		if(iterator->position == atoi(arguments[1])){
+			int val = kill(iterator->processId, atoi(arguments[2]));
+			if(val == -1) {
+				perror("Kill error");
+				return 1;
+			}
+			return 0;
+		}
+		iterator = iterator->nextCommand;
+	}
+	fprintf(stderr, "Error: No job with job number %d\n", atoi(arguments[1]));
+	return 1;
+}
+
+int bgBuiltin(char **arguments, int count, char *home_directory){
+	if(count != 2){
+		fprintf(stderr, "Error: Invalid Usage\n");
+		return 1;
+	}
+	backgroundCommands *iterator = startProcess;
+	while(iterator){
+		if(iterator->position == atoi(arguments[1])){
+			int val = kill(iterator->processId, SIGCONT);
+			if(val == -1) {
+				perror("Kill error");
+				return 1;
+			}
+			return 0;
+		}
+		iterator = iterator->nextCommand;
+	}
+	fprintf(stderr, "Error: No job with job number %d\n", atoi(arguments[1]));
+	return 1;
+}
+
+int fgBuiltin(char **arguments, int count, char *home_directory){
+	return 0;
+if(count != 2){
+		fprintf(stderr, "Error: Invalid Usage\n");
+		return 1;
+	}
+	backgroundCommands *iterator = startProcess, *prev = NULL;
+	while(iterator) {
+		if(iterator->processId == pid) {
+			if(prev){
+				prev->nextCommand = iterator->nextCommand;
+			}
+			else{
+				startProcess = iterator->nextCommand;
+			}
+			break;
+		}
+		prev = iterator;
+		iterator = iterator->nextCommand;
+	}
+	while(iterator){
+		if(iterator->position == atoi(arguments[1])){
+			;
+		}
+		iterator = iterator->nextCommand;
+	}
+	fprintf(stderr, "Error: No job with job number %d\n", atoi(arguments[1]));
+	return 1;
 }

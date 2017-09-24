@@ -45,6 +45,9 @@ struct builtins{
 	{"nightswatch", nightswatch},
 	{"pinfo", pinfo},
 	{"jobs", printJobs},
+	{"kjob", kjob},
+	{"fg", fgBuiltin},
+	{"bg", bgBuiltin},
 	{"setenv", setenvBuiltin},
 	{"getenv", getenvBuiltin},
 	{"unsetenv", unsetenvBuiltin},
@@ -225,30 +228,22 @@ int runCommand(char *command){
 		                return val;
 		        }
 		}
+		pid_t PID = fork();
 
-		if(isBackground){
-			pid_t PID = fork();
-
-			if(PID == 0){
-				setpgid(0, 0);
-				execvp(listCommands[i].arguments[0], listCommands[i].arguments);
-				perror("Execvp Error");
-				exit(0);
-			}
-			else{
-				addToBackground(PID, listCommands[i].arguments[0]);
-			}
+		if(PID == 0){
+			setpgid(0, 0);
+			execvp(listCommands[i].arguments[0], listCommands[i].arguments);
+			perror("Execvp Error");
+			exit(0);
 		}
 		else{
-			pid_t PID = fork();
-			if(PID == 0){
-				execvp(listCommands[i].arguments[0], listCommands[i].arguments);
-				perror("Execvp Error");
-				exit(0);
-			}	
+			if(isBackground){
+				addToBackground(PID, listCommands[i].arguments[0]);
+			}
 			else{
-				int status;
-				wait(NULL);
+				addToForeground(PID, listCommands[i].arguments[0]);
+				siginfo_t fgStatus;
+				waitid(P_PID, PID, &fgStatus, (WUNTRACED | WNOWAIT));
 			}
 		}
 	}
