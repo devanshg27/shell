@@ -118,7 +118,7 @@ int getenvBuiltin(char **arguments, int count, char *home_directory){
 		perror("Getenv: Invalid Usage");
 		return 1;
 	}
-	else printf("%s", getenv(arguments[1]));
+	else printf("%s\n", getenv(arguments[1]));
 	return 0;
 }
 

@@ -50,12 +50,12 @@ int showPrompt(char **promptString) {
 				break;
 			}
 		}
-		printf("<\033[0;36m%s\033[0m@\033[0;32m%s\033[0m:\033[1;33m", username, system_name);
+		sprintf(*promptString, "<\033[0;36m%s\033[0m@\033[0;32m%s\033[0m:\033[1;33m", username, system_name);
 		if(isPrefix) {
-			sprintf(*promptString, "~%s\033[0m> ", &current_directory[strlen(home_directory)]);
+			sprintf(*promptString + strlen(*promptString), "~%s\033[0m> ", &current_directory[strlen(home_directory)]);
 		}
 		else {
-			sprintf(*promptString, "%s\033[0m> ", current_directory);
+			sprintf(*promptString + strlen(*promptString), "%s\033[0m> ", current_directory);
 		}
 		return 0;
 	}
