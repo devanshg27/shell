@@ -51,6 +51,9 @@ void childEndHandler(int sig){
 
 		printf("%s with pid %d exited with status %d\n", iterator->commandName, pid, es);
 	}
+	else{
+		printf("%s with pid %d terminated\n", iterator->commandName, pid);
+	}
 
 	free(iterator->commandName);
 	free(iterator);
@@ -58,6 +61,7 @@ void childEndHandler(int sig){
 
 void initJobControl() {
 	signal(SIGCHLD, childEndHandler);
+	signal(SIGINT, SIG_IGN);
 }
 
 int recursivePrintJob(backgroundCommands* iterator) {
@@ -132,7 +136,6 @@ int overkill(char **arguments, int count, char *home_directory){
 		int val = kill(iterator->processId, SIGKILL);
 		iterator = iterator->nextCommand;
 	}
-	startProcess = NULL;
 	return 0;
 }
 
