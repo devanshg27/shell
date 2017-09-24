@@ -14,6 +14,9 @@
 #include <jobcontrol.h>
 #include <pinfo.h>
 #include <errno.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 
 char home_directory[PATH_MAX + 1];
 
@@ -28,6 +31,7 @@ typedef struct {
 	char *inputFile;
 	char **arguments;
 	char *outputFile;
+	int appendWrite;
 } commandObject;
 
 struct builtins{
@@ -101,6 +105,7 @@ int commandParser(char *command, commandObject** listCommands) {
 	(*listCommands)[position].inputFile = NULL;
 	(*listCommands)[position].arguments = NULL;
 	(*listCommands)[position].outputFile = NULL;
+	(*listCommands)[position].appendWrite = 0;
 
 	int positionArgument;
 	for (int i=0; i<position; ++i) {
@@ -109,6 +114,7 @@ int commandParser(char *command, commandObject** listCommands) {
 		argument = (*listCommands)[i].inputFile;
 		(*listCommands)[i].inputFile = NULL;
 		(*listCommands)[i].outputFile = NULL;
+		(*listCommands)[i].appendWrite = 0;
 		(*listCommands)[i].arguments = malloc(BUFFER_SIZE * sizeof(char *));
 		if((*listCommands)[i].arguments == NULL){
 			perror("Malloc Failed");
@@ -126,10 +132,22 @@ int commandParser(char *command, commandObject** listCommands) {
 					return 1;
 				}
 			}
+			else if(strcmp(pch, ">>") == 0) {
+				pch = strtok(NULL, " \t");
+				if(pch) {
+					(*listCommands)[i].outputFile = pch;
+					(*listCommands)[i].appendWrite = 1;
+				}
+				else {
+					fprintf(stderr, "Syntax Error\n");
+					return 1;
+				}
+			}
 			else if(strcmp(pch, ">") == 0) {
 				pch = strtok(NULL, " \t");
 				if(pch) {
 					(*listCommands)[i].outputFile = pch;
+					(*listCommands)[i].appendWrite = 0;
 				}
 				else {
 					fprintf(stderr, "Syntax Error\n");
@@ -185,6 +203,7 @@ int runCommand(char *command){
 	commandObject *listCommands;
 	if(commandParser(command, &listCommands)) return 1;
 	for(int i=0; listCommands[i].arguments!=NULL; ++i) {
+
 		// printf("Command ");
 		// if(listCommands[i].inputFile) {
 		// 	printf("< %s ", listCommands[i].inputFile);
@@ -197,14 +216,14 @@ int runCommand(char *command){
 		// 	printf("\t%s\n", listCommands[i].arguments[j]);
 		// }
 
-		int numberOfImplementedBuiltins = sizeof(implementedBuiltins)/sizeof(implementedBuiltins[0]);
+ 		int numberOfImplementedBuiltins = sizeof(implementedBuiltins)/sizeof(implementedBuiltins[0]);
 		for(int j=0; j<numberOfImplementedBuiltins; ++j){
-			if(strcmp(listCommands[i].arguments[0], implementedBuiltins[j].command) == 0){
-				int countArguments = 0;
-				while(listCommands[i].arguments[countArguments]) ++countArguments;
-				int val = (implementedBuiltins[j].commandFunction)(listCommands[i].arguments, countArguments, home_directory);
-				return val;
-			}
+		        if(strcmp(listCommands[i].arguments[0], implementedBuiltins[j].command) == 0){
+		                int countArguments = 0;
+		                while(listCommands[i].arguments[countArguments]) ++countArguments;
+		                int val = (implementedBuiltins[j].commandFunction)(listCommands[i].arguments, countArguments, home_directory);
+		                return val;
+		        }
 		}
 
 		if(isBackground){
@@ -233,6 +252,7 @@ int runCommand(char *command){
 			}
 		}
 	}
+
 
 	for(int i=0; listCommands[i].arguments!=NULL; ++i) {
 		for (int j = 0; listCommands[i].arguments[j]!=NULL; ++j) {
