@@ -127,12 +127,10 @@ int unsetenvbuiltin(char **arguments, int count, char *home_directory){
 }
 
 int overkill(char **arguments, int count, char *home_directory){
-	backgroundCommands *iterator = startProcess, *temporary = startProcess;
+	backgroundCommands *iterator = startProcess;
 	while(iterator){
 		int val = kill(iterator->processId, SIGKILL);
-		temporary = iterator->nextCommand;
-		free(iterator);
-		iterator = temporary;
+		iterator = iterator->nextCommand;
 	}
 	startProcess = NULL;
 	return 0;

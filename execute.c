@@ -211,6 +211,8 @@ int runCommand(char *command){
 		if(PID == 0){
 			setpgid(0, 0);
 			execvp(listCommands[i].arguments[0], listCommands[i].arguments);
+			perror("Execvp Error");
+			exit(0);
 		}
 		else{
 			addToBackground(PID, listCommands[i].arguments[0]);
