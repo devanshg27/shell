@@ -243,29 +243,27 @@ int bgBuiltin(char **arguments, int count, char *home_directory){
 }
 
 int fgBuiltin(char **arguments, int count, char *home_directory){
-	return 0;
-if(count != 2){
+	if(count != 2){
 		fprintf(stderr, "Error: Invalid Usage\n");
 		return 1;
 	}
 	backgroundCommands *iterator = startProcess, *prev = NULL;
 	while(iterator) {
-		if(iterator->processId == pid) {
+		if(iterator->position == atoi(arguments[1])){
 			if(prev){
 				prev->nextCommand = iterator->nextCommand;
 			}
 			else{
 				startProcess = iterator->nextCommand;
 			}
-			break;
+			addToForeground(iterator->processId, iterator->commandName);
+			free(iterator->commandName);
+			free(iterator);
+			siginfo_t fgStatus;
+			waitid(P_PID, foreGroundCommand->processId, &fgStatus, (WUNTRACED | WNOWAIT));
+			return 0;
 		}
 		prev = iterator;
-		iterator = iterator->nextCommand;
-	}
-	while(iterator){
-		if(iterator->position == atoi(arguments[1])){
-			;
-		}
 		iterator = iterator->nextCommand;
 	}
 	fprintf(stderr, "Error: No job with job number %d\n", atoi(arguments[1]));
