@@ -206,7 +206,7 @@ int runCommand(char *command){
 	commandObject *listCommands;
 	if(commandParser(command, &listCommands)) return 1;
 
-	int restore_input = dup(0), restore_output = dup(1), input = 0, first = 0;
+	int restore_input = dup(0), restore_output = dup(1), input = 0;
 
 	int numberOfCommands = 0;
 	while(listCommands[numberOfCommands].arguments) ++numberOfCommands;
@@ -242,18 +242,18 @@ int runCommand(char *command){
 						int inp = open(listCommands[i].inputFile, O_RDONLY);
 						if(inp == -1){
 							perror("Error");
-							exit(0);
+							return 0;
 						}
 						dup2(inp, STDIN_FILENO);
 						close(inp);
 					}
 					if(listCommands[i].outputFile){
 						int out;
-						if(listCommands[i].appendWrite) out = open(listCommands[i].outputFile, O_WRONLY | O_CREAT | O_APPEND, 644);
-						else out = open(listCommands[i].outputFile, O_WRONLY | O_TRUNC | O_CREAT, 644);
+						if(listCommands[i].appendWrite) out = open(listCommands[i].outputFile, O_WRONLY | O_CREAT | O_APPEND, (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH));
+						else out = open(listCommands[i].outputFile, O_WRONLY | O_TRUNC | O_CREAT, (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH));
 						if(out == -1){
 							perror("Error");
-							exit(0);
+							return 0;
 						}
 						dup2(out, STDOUT_FILENO);
 						close(out);	
@@ -288,8 +288,8 @@ int runCommand(char *command){
 						}
 						if(listCommands[i].outputFile){
 							int out;
-							if(listCommands[i].appendWrite) out = open(listCommands[i].outputFile, O_WRONLY | O_CREAT | O_APPEND, 644);
-							else out = open(listCommands[i].outputFile, O_WRONLY | O_TRUNC | O_CREAT, 644);
+							if(listCommands[i].appendWrite) out = open(listCommands[i].outputFile, O_WRONLY | O_CREAT | O_APPEND, (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH));
+							else out = open(listCommands[i].outputFile, O_WRONLY | O_TRUNC | O_CREAT, (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH));
 							if(out == -1){
 								perror("Error");
 								exit(0);
@@ -336,8 +336,8 @@ int runCommand(char *command){
 				}
 				if(listCommands[i].outputFile){
 					int out;
-					if(listCommands[i].appendWrite) out = open(listCommands[i].outputFile, O_WRONLY | O_CREAT | O_APPEND, 644);
-					else out = open(listCommands[i].outputFile, O_WRONLY | O_TRUNC | O_CREAT, 644);
+					if(listCommands[i].appendWrite) out = open(listCommands[i].outputFile, O_WRONLY | O_CREAT | O_APPEND, (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH));
+					else out = open(listCommands[i].outputFile, O_WRONLY | O_TRUNC | O_CREAT, (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH));
 					if(out == -1){
 						perror("Error");
 						exit(0);

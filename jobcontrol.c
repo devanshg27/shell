@@ -172,6 +172,10 @@ int overkill(char **arguments, int count, char *home_directory){
 	backgroundCommands *iterator = startProcess;
 	while(iterator){
 		int val = kill(iterator->processId, SIGKILL);
+		if(val == -1){
+			perror("Error");
+			return 1;
+		}
 		iterator = iterator->nextCommand;
 	}
 	return 0;
