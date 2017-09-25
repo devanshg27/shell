@@ -240,13 +240,21 @@ int runCommand(char *command){
 				if(numberOfCommands == 1){
 					if(listCommands[i].inputFile){
 						int inp = open(listCommands[i].inputFile, O_RDONLY);
+						if(inp == -1){
+							perror("Error");
+							exit(0);
+						}
 						dup2(inp, STDIN_FILENO);
 						close(inp);
 					}
 					if(listCommands[i].outputFile){
 						int out;
-						if(listCommands[i].appendWrite) out = open(listCommands[i].outputFile, O_WRONLY | O_CREAT | O_APPEND, 0777);
-						else out = open(listCommands[i].outputFile, O_WRONLY | O_TRUNC | O_CREAT, 0777);
+						if(listCommands[i].appendWrite) out = open(listCommands[i].outputFile, O_WRONLY | O_CREAT | O_APPEND, 644);
+						else out = open(listCommands[i].outputFile, O_WRONLY | O_TRUNC | O_CREAT, 644);
+						if(out == -1){
+							perror("Error");
+							exit(0);
+						}
 						dup2(out, STDOUT_FILENO);
 						close(out);	
 					}
@@ -271,13 +279,21 @@ int runCommand(char *command){
 
 						if(listCommands[i].inputFile){
 							int inp = open(listCommands[i].inputFile, O_RDONLY);
+							if(inp == -1){
+								perror("Error");
+								exit(0);
+							}
 							dup2(inp, STDIN_FILENO);
 							close(inp);
 						}
 						if(listCommands[i].outputFile){
 							int out;
-							if(listCommands[i].appendWrite) out = open(listCommands[i].outputFile, O_WRONLY | O_CREAT | O_APPEND, 0777);
-							else out = open(listCommands[i].outputFile, O_WRONLY | O_TRUNC | O_CREAT, 0777);
+							if(listCommands[i].appendWrite) out = open(listCommands[i].outputFile, O_WRONLY | O_CREAT | O_APPEND, 644);
+							else out = open(listCommands[i].outputFile, O_WRONLY | O_TRUNC | O_CREAT, 644);
+							if(out == -1){
+								perror("Error");
+								exit(0);
+							}
 							dup2(out, STDOUT_FILENO);
 							close(out);	
 						}
@@ -311,13 +327,21 @@ int runCommand(char *command){
 
 				if(listCommands[i].inputFile){
 					int inp = open(listCommands[i].inputFile, O_RDONLY);
+					if(inp == -1){
+						perror("Error");
+						exit(0);
+					}
 					dup2(inp, STDIN_FILENO);
 					close(inp);
 				}
 				if(listCommands[i].outputFile){
 					int out;
-					if(listCommands[i].appendWrite) out = open(listCommands[i].outputFile, O_WRONLY | O_CREAT | O_APPEND, 0777);
-					else out = open(listCommands[i].outputFile, O_WRONLY | O_TRUNC | O_CREAT, 0777);
+					if(listCommands[i].appendWrite) out = open(listCommands[i].outputFile, O_WRONLY | O_CREAT | O_APPEND, 644);
+					else out = open(listCommands[i].outputFile, O_WRONLY | O_TRUNC | O_CREAT, 644);
+					if(out == -1){
+						perror("Error");
+						exit(0);
+					}
 					dup2(out, STDOUT_FILENO);
 					close(out);	
 				}
