@@ -205,6 +205,9 @@ int runCommand(char *command){
 	}
 	commandObject *listCommands;
 	if(commandParser(command, &listCommands)) return 1;
+
+	int restore_input = dup(0), restore_output = dup(1), input = 0, first = 0;
+
 	for(int i=0; listCommands[i].arguments!=NULL; ++i) {
 
 		// printf("Command ");
@@ -219,35 +222,74 @@ int runCommand(char *command){
 		// 	printf("\t%s\n", listCommands[i].arguments[j]);
 		// }
 
- 		int numberOfImplementedBuiltins = sizeof(implementedBuiltins)/sizeof(implementedBuiltins[0]);
-		for(int j=0; j<numberOfImplementedBuiltins; ++j){
-		        if(strcmp(listCommands[i].arguments[0], implementedBuiltins[j].command) == 0){
-		                int countArguments = 0;
-		                while(listCommands[i].arguments[countArguments]) ++countArguments;
-		                int val = (implementedBuiltins[j].commandFunction)(listCommands[i].arguments, countArguments, home_directory);
-		                return val;
-		        }
-		}
-		pid_t PID = fork();
+		int isBuiltin = 0;
 
-		if(PID == 0){
-			setpgid(0, 0);
-			execvp(listCommands[i].arguments[0], listCommands[i].arguments);
-			perror("Execvp Error");
-			exit(0);
+		int pipes[2];
+		pipe(pipes);
+
+		int numberOfImplementedBuiltins = sizeof(implementedBuiltins)/sizeof(implementedBuiltins[0]);
+		for(int j=0; j<numberOfImplementedBuiltins; ++j){
+			if(strcmp(listCommands[i].arguments[0], implementedBuiltins[j].command) == 0){
+				isBuiltin = 1;
+				int countArguments = 0;
+				while(listCommands[i].arguments[countArguments]) ++countArguments;
+				int val = (implementedBuiltins[j].commandFunction)(listCommands[i].arguments, countArguments, home_directory);
+				if(val) return val;
+			}
 		}
-		else{
-			if(isBackground){
-				addToBackground(PID, listCommands[i].arguments[0]);
+
+		if(isBuiltin == 0){
+			pid_t PID = fork();
+			if(PID == 0){
+				if(i == 0 && listCommands[i + 1].arguments != NULL && input == 0){
+					dup2(pipes[1], STDOUT_FILENO);	
+				} 
+				else if(i > 0 && listCommands[i + 1].arguments != NULL && input != 0){
+					dup2(pipes[1], STDOUT_FILENO);
+					dup2(input, STDIN_FILENO);
+				}
+				else dup2(input, STDIN_FILENO);	
+
+				if(listCommands[i].inputFile){
+					int inp = open(listCommands[i].inputFile, O_RDONLY);
+					dup2(inp, STDIN_FILENO);
+					close(inp);
+				}
+				if(listCommands[i].outputFile){
+					int out;
+					if(listCommands[i].appendWrite) out = open(listCommands[i].outputFile, O_WRONLY | O_CREAT, 0777);
+					else out = open(listCommands[i].outputFile, O_WRONLY | O_TRUNC | O_CREAT, 0777);
+					dup2(out, STDOUT_FILENO);
+					close(out);	
+				}
+
+
+				setpgid(0, 0);
+				execvp(listCommands[i].arguments[0], listCommands[i].arguments);
+				perror("Execvp Error");
+				exit(0);
 			}
 			else{
-				addToForeground(PID, listCommands[i].arguments[0]);
-				siginfo_t fgStatus;
-				waitid(P_PID, PID, &fgStatus, (WUNTRACED | WNOWAIT));
+				if(isBackground){
+					addToBackground(PID, listCommands[i].arguments[0]);
+				}
+				else{
+					addToForeground(PID, listCommands[i].arguments[0]);
+					siginfo_t fgStatus;
+					waitid(P_PID, PID, &fgStatus, (WUNTRACED | WNOWAIT));
+				}
 			}
+			if(input != 0) close(input);
+			close(pipes[1]);
+			if(listCommands[i + 1].arguments == NULL) close(pipes[0]);
+			input = pipes[0];
 		}
 	}
 
+	dup2(restore_input, 0);
+	dup2(restore_output, 0);
+	close(restore_input);
+	close(restore_output);
 
 	for(int i=0; listCommands[i].arguments!=NULL; ++i) {
 		for (int j = 0; listCommands[i].arguments[j]!=NULL; ++j) {
