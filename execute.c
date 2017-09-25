@@ -208,6 +208,9 @@ int runCommand(char *command){
 
 	int restore_input = dup(0), restore_output = dup(1), input = 0, first = 0;
 
+	int numberOfCommands = 0;
+	while(listCommands[numberOfCommands].arguments) ++numberOfCommands;
+
 	for(int i=0; listCommands[i].arguments!=NULL; ++i) {
 
 		// printf("Command ");
@@ -233,8 +236,64 @@ int runCommand(char *command){
 				isBuiltin = 1;
 				int countArguments = 0;
 				while(listCommands[i].arguments[countArguments]) ++countArguments;
-				int val = (implementedBuiltins[j].commandFunction)(listCommands[i].arguments, countArguments, home_directory);
-				if(val) return val;
+
+				if(numberOfCommands == 1){
+					if(listCommands[i].inputFile){
+						int inp = open(listCommands[i].inputFile, O_RDONLY);
+						dup2(inp, STDIN_FILENO);
+						close(inp);
+					}
+					if(listCommands[i].outputFile){
+						int out;
+						if(listCommands[i].appendWrite) out = open(listCommands[i].outputFile, O_WRONLY | O_CREAT | O_APPEND, 0777);
+						else out = open(listCommands[i].outputFile, O_WRONLY | O_TRUNC | O_CREAT, 0777);
+						dup2(out, STDOUT_FILENO);
+						close(out);	
+					}
+					(implementedBuiltins[j].commandFunction)(listCommands[i].arguments, countArguments, home_directory);
+					dup2(restore_input, 0);
+					dup2(restore_output, 1);
+					close(restore_input);
+					close(restore_output);
+		
+				}
+				else{
+					pid_t PID = fork();
+					if(PID == 0){
+						if(i == 0 && listCommands[i + 1].arguments != NULL && input == 0){
+							dup2(pipes[1], STDOUT_FILENO);	
+						} 
+						else if(i > 0 && listCommands[i + 1].arguments != NULL && input != 0){
+							dup2(pipes[1], STDOUT_FILENO);
+							dup2(input, STDIN_FILENO);
+						}
+						else dup2(input, STDIN_FILENO);	
+
+						if(listCommands[i].inputFile){
+							int inp = open(listCommands[i].inputFile, O_RDONLY);
+							dup2(inp, STDIN_FILENO);
+							close(inp);
+						}
+						if(listCommands[i].outputFile){
+							int out;
+							if(listCommands[i].appendWrite) out = open(listCommands[i].outputFile, O_WRONLY | O_CREAT | O_APPEND, 0777);
+							else out = open(listCommands[i].outputFile, O_WRONLY | O_TRUNC | O_CREAT, 0777);
+							dup2(out, STDOUT_FILENO);
+							close(out);	
+						}
+
+						(implementedBuiltins[j].commandFunction)(listCommands[i].arguments, countArguments, home_directory);
+						exit(0);
+					}
+				
+					else{
+						wait(NULL);
+					}
+					if(input != 0) close(input);
+					close(pipes[1]);
+					if(listCommands[i + 1].arguments == NULL) close(pipes[0]);
+					input = pipes[0];
+				}
 			}
 		}
 
@@ -257,7 +316,7 @@ int runCommand(char *command){
 				}
 				if(listCommands[i].outputFile){
 					int out;
-					if(listCommands[i].appendWrite) out = open(listCommands[i].outputFile, O_WRONLY | O_CREAT, 0777);
+					if(listCommands[i].appendWrite) out = open(listCommands[i].outputFile, O_WRONLY | O_CREAT | O_APPEND, 0777);
 					else out = open(listCommands[i].outputFile, O_WRONLY | O_TRUNC | O_CREAT, 0777);
 					dup2(out, STDOUT_FILENO);
 					close(out);	
@@ -288,7 +347,7 @@ int runCommand(char *command){
 	}
 
 	dup2(restore_input, 0);
-	dup2(restore_output, 0);
+	dup2(restore_output, 1);
 	close(restore_input);
 	close(restore_output);
 
