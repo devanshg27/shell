@@ -275,6 +275,7 @@ int runCommand(char *command){
 				}
 				else{
 					addToForeground(PID, listCommands[i].arguments[0]);
+					tcsetpgrp(STDIN_FILENO, PID);
 					siginfo_t fgStatus;
 					waitid(P_PID, PID, &fgStatus, (WUNTRACED | WNOWAIT));
 				}

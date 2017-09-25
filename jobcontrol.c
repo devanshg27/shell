@@ -48,6 +48,7 @@ void childEndHandler(int sig){
 		}
 		
 		if(foreGroundCommand && foreGroundCommand->processId == pid) {
+			tcsetpgrp(STDIN_FILENO, getpgid(0));
 			if(WIFEXITED(status)){
 			}
 			else if(WIFSTOPPED(status)) {
@@ -98,6 +99,7 @@ void initJobControl() {
 	signal(SIGCHLD, childEndHandler);
 	signal(SIGINT, sigintHandler);
 	signal(SIGTSTP, sigtstpHandler);
+	signal(SIGTTOU, SIG_IGN);
 }
 
 int recursivePrintJob(backgroundCommands* iterator) {
@@ -264,6 +266,7 @@ int fgBuiltin(char **arguments, int count, char *home_directory){
 			addToForeground(iterator->processId, iterator->commandName);
 			free(iterator->commandName);
 			free(iterator);
+			tcsetpgrp(STDIN_FILENO, foreGroundCommand->processId);
 			siginfo_t fgStatus;
 			waitid(P_PID, foreGroundCommand->processId, &fgStatus, (WUNTRACED | WNOWAIT));
 			return 0;
